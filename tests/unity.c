@@ -22,17 +22,15 @@ void unity_run_test(void (*test_func)(void), const char* test_name) {
     Unity.current_test = test_name;
     Unity.tests_run++;
     
-    printf("Running %s... ", test_name);
-    fflush(stdout);
-    
     int failed_before = Unity.tests_failed;
     test_func();
     
+    // Show final result
     if (Unity.tests_failed == failed_before) {
         Unity.tests_passed++;
-        printf(UNITY_COLOR_GREEN "✅ PASS" UNITY_COLOR_RESET "\n");
+        printf("%s... " UNITY_COLOR_GREEN "pass" UNITY_COLOR_RESET "\n", test_name);
     } else {
-        printf(UNITY_COLOR_RED "❌ FAIL" UNITY_COLOR_RESET "\n");
+        printf("%s... " UNITY_COLOR_RED "fail" UNITY_COLOR_RESET "\n", test_name);
     }
 }
 
