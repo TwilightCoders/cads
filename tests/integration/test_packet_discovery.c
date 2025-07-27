@@ -171,9 +171,12 @@ void test_targeted_mxt275_discovery(void) {
 void test_dataset_comparison(void) {
     printf("🔍 Testing dataset comparison: GMRS vs JSON...\n");
     
-    // Create GMRS dataset
-    packet_dataset_t* gmrs_dataset = create_default_gmrs_dataset();
+    // Create GMRS dataset from file
+    packet_dataset_t* gmrs_dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(gmrs_dataset);
+    
+    bool gmrs_success = load_packets_from_json(gmrs_dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(gmrs_success);
     
     // Create JSON dataset
     packet_dataset_t* json_dataset = create_packet_dataset(20);
@@ -226,7 +229,7 @@ void test_dataset_comparison(void) {
     progress_tracker_t tracker1 = {0};
     
     printf("🎯 Testing search with GMRS dataset...\n");
-    bool gmrs_success = execute_checksum_search(gmrs_dataset, &config, gmrs_results, &tracker1);
+    gmrs_success = execute_checksum_search(gmrs_dataset, &config, gmrs_results, &tracker1);
     printf("📈 GMRS search result: %s, solutions found: %zu\n", 
            gmrs_success ? "SUCCESS" : "FAILED", gmrs_results->solution_count);
     

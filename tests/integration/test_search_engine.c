@@ -15,8 +15,11 @@ void tearDown(void) {
 
 // Test custom operation selection
 void test_custom_operation_selection(void) {
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool load_success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(load_success);
     
     // Define custom operations for Forj algorithm
     operation_t forj_operations[] = {
@@ -60,8 +63,11 @@ void test_custom_operation_selection(void) {
 
 // Test search engine without custom operations (standard complexity)
 void test_standard_complexity_search(void) {
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool load_success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(load_success);
     
     search_config_t config = {
         .complexity = COMPLEXITY_BASIC,  // Use basic operations only

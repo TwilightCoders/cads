@@ -50,8 +50,11 @@ void test_forj_algorithm_sequence(void) {
 void test_forj_algorithm_all_packets(void) {
     setUp();  // Initialize algorithm registry
     
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool load_success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(load_success);
     
     for (size_t i = 0; i < dataset->count; i++) {
         const test_packet_t* packet = &dataset->packets[i];

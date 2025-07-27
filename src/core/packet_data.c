@@ -227,49 +227,6 @@ bool load_packets_from_csv(packet_dataset_t* dataset, const char* filename) {
     return true;
 }
 
-// Create default GMRS dataset (backwards compatibility)
-packet_dataset_t* create_default_gmrs_dataset(void) {
-    packet_dataset_t* dataset = create_packet_dataset(16);
-    if (!dataset) return NULL;
-    
-    // Original GMRS test packets from legacy code
-    struct {
-        const char* hex_data;
-        const char* hex_checksum;
-        const char* description;
-    } gmrs_packets[] = {
-        // Low channels (1-7) - simple pattern
-        {"9c30010000000000", "31", "CH1"},
-        {"9c30030000000000", "33", "CH3"},
-        {"9c30040000000000", "34", "CH4"},
-        {"9c30050000000000", "35", "CH5"},
-        {"9c30060000000000", "36", "CH6"},
-        {"9c30070000000000", "37", "CH7"},
-        
-        // High channels (15-22) - complex pattern
-        {"9c300f00000100", "3e", "CH15"},
-        {"9c301000000100", "21", "CH16"},
-        {"9c301100000100", "20", "CH17"},
-        {"9c301200000100", "23", "CH18"},
-        {"9c301300000100", "22", "CH19"},
-        {"9c301400000100", "25", "CH20"},
-        {"9c301500000100", "24", "CH21"},
-        {"9c301600000100", "27", "CH22"},
-        
-        // CTCSS channels - special cases
-        {"9c30020109000000", "3a", "CH2+CTCSS09"},
-        {"9c300f010a0100", "35", "CH15+CTCSS10"},
-    };
-    
-    for (size_t i = 0; i < sizeof(gmrs_packets) / sizeof(gmrs_packets[0]); i++) {
-        add_packet_from_hex(dataset, gmrs_packets[i].hex_data, 
-                           gmrs_packets[i].hex_checksum, 1, 
-                           gmrs_packets[i].description);
-    }
-    
-    return dataset;
-}
-
 // Extract checksum from full packet
 uint64_t extract_checksum_from_packet(const uint8_t* full_packet, size_t packet_length, 
                                      size_t checksum_size, bool little_endian) {

@@ -1,0 +1,16 @@
+{"packet": "9c30010000000000", "checksum": "31", "description": "CH1"}
+{"packet": "9c30030000000000", "checksum": "33", "description": "CH3"}
+{"packet": "9c30040000000000", "checksum": "34", "description": "CH4"}
+{"packet": "9c30050000000000", "checksum": "35", "description": "CH5"}
+{"packet": "9c30060000000000", "checksum": "36", "description": "CH6"}
+{"packet": "9c30070000000000", "checksum": "37", "description": "CH7"}
+{"packet": "9c300f00000100", "checksum": "3e", "description": "CH15"}
+{"packet": "9c301000000100", "checksum": "21", "description": "CH16"}
+{"packet": "9c301100000100", "checksum": "20", "description": "CH17"}
+{"packet": "9c301200000100", "checksum": "23", "description": "CH18"}
+{"packet": "9c301300000100", "checksum": "22", "description": "CH19"}
+{"packet": "9c301400000100", "checksum": "25", "description": "CH20"}
+{"packet": "9c301500000100", "checksum": "24", "description": "CH21"}
+{"packet": "9c301600000100", "checksum": "27", "description": "CH22"}
+{"packet": "9c30020109000000", "checksum": "3a", "description": "CH2+CTCSS09"}
+{"packet": "9c300f010a0100", "checksum": "35", "description": "CH15+CTCSS10"}

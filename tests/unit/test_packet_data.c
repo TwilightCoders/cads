@@ -13,9 +13,11 @@ void tearDown(void) {
 
 // Test GMRS dataset creation
 void test_create_gmrs_dataset(void) {
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
-    
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(success);
     TEST_ASSERT(dataset->count > 0);
     TEST_ASSERT_NOT_NULL(dataset->packets);
     
@@ -30,8 +32,11 @@ void test_create_gmrs_dataset(void) {
 
 // Test specific GMRS packet data
 void test_gmrs_packet_content(void) {
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(success);
     
     // Test CH1 packet: [9c 30 01 00 00 00 00 00] -> 0x31
     const test_packet_t* ch1 = &dataset->packets[0];
@@ -47,8 +52,11 @@ void test_gmrs_packet_content(void) {
 
 // Test packet validation
 void test_packet_validation(void) {
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(success);
     
     // All packets should have consistent checksum size
     for (size_t i = 0; i < dataset->count; i++) {
@@ -62,8 +70,11 @@ void test_packet_validation(void) {
 
 // Test dataset cleanup
 void test_dataset_cleanup(void) {
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(success);
     
     // Should not crash
     free_packet_dataset(dataset);
@@ -74,8 +85,11 @@ void test_dataset_cleanup(void) {
 
 // Test dataset size
 void test_dataset_size(void) {
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(success);
     
     // Should have multiple test packets for proper validation
     TEST_ASSERT(dataset->count >= 3);  // At least CH1, CH3, CH4

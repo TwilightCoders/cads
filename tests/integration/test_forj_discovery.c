@@ -16,8 +16,11 @@ void tearDown(void) {
 // Test that the search engine can discover the Forj algorithm
 void test_forj_algorithm_discovery(void) {
     // Create test dataset
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool load_success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(load_success);
     
     // Create focused search configuration for Forj algorithm discovery
     search_config_t config = {
@@ -64,8 +67,11 @@ void test_forj_algorithm_discovery(void) {
 // Test discovery with custom operation set (faster)
 void test_forj_discovery_with_custom_operations(void) {
     // Create test dataset
-    packet_dataset_t* dataset = create_default_gmrs_dataset();
+    packet_dataset_t* dataset = create_packet_dataset(20);
     TEST_ASSERT_NOT_NULL(dataset);
+    
+    bool load_success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
+    TEST_ASSERT(load_success);
     
     // Create custom operation set focused on Forj algorithm
     operation_t forj_operations[] = {

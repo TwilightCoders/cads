@@ -27,8 +27,6 @@ bool load_packets_from_file(packet_dataset_t* dataset, const char* filename);
 bool load_packets_from_csv(packet_dataset_t* dataset, const char* filename);
 bool load_packets_from_json(packet_dataset_t* dataset, const char* filename);
 
-// Create default test dataset (backwards compatibility)
-packet_dataset_t* create_default_gmrs_dataset(void);
 
 // Utility functions
 uint64_t extract_checksum_from_packet(const uint8_t* full_packet, size_t packet_length, 
