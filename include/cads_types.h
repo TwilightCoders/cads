@@ -8,7 +8,7 @@
 
 // Configuration limits and defaults
 #define CADS_MAX_PACKET_SIZE 1024     // Maximum supported packet size
-#define CADS_MAX_FIELDS 256           // Maximum number of fields in a packet
+#define CADS_MAX_FIELDS 16            // Maximum number of fields in a packet
 #define CADS_MAX_PERMUTATIONS 24      // Limit permutations for performance
 #define CADS_MAX_CONSTANTS 256        // All possible byte values
 #define CADS_DEFAULT_CHECKSUM_SIZE 1  // Default checksum size in bytes
@@ -84,6 +84,11 @@ typedef struct {
     const char* resume_file;
     int progress_interval;
     const char* input_file;            // Input file with test packets
+    
+    // Custom operation selection (for targeted testing)
+    operation_t* custom_operations;    // Array of specific operations to test
+    int custom_operation_count;        // Number of operations in custom_operations
+    bool use_custom_operations;        // If true, only test custom_operations instead of complexity level
 } search_config_t;
 
 // Solution result structure
@@ -96,6 +101,16 @@ typedef struct {
     size_t checksum_size;              // Size of the checksum this solution produces
     bool validated;
 } checksum_solution_t;
+
+// Search results container
+typedef struct {
+    checksum_solution_t* solutions;    // Array of solutions found
+    size_t solution_count;             // Number of solutions found
+    size_t solution_capacity;          // Capacity of solutions array
+    uint64_t tests_performed;          // Total tests performed during search
+    bool search_completed;             // Whether search finished normally
+    bool early_exit_triggered;        // Whether early exit was triggered
+} search_results_t;
 
 // Expression tree node for complex operations (future use)
 typedef struct expr_node {

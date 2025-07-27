@@ -2,50 +2,63 @@
 
 // Intermediate complexity operations
 uint64_t intermediate_not(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)b;
+    (void)constant;
     return ~a;
 }
 
 uint64_t intermediate_lshift(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return a << (b & 0x3F); // Limit shift to 63 bits for 64-bit values
 }
 
 uint64_t intermediate_rshift(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return a >> (b & 0x3F);
 }
 
 uint64_t intermediate_mul(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return a * (b ? b : 1);
 }
 
 uint64_t intermediate_div(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return b ? (a / b) : 0;
 }
 
 uint64_t intermediate_mod(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return b ? (a % b) : 0;
 }
 
 uint64_t intermediate_negate(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)b;
+    (void)constant;
     return (~a) + 1; // Two's complement negation
 }
 
 uint64_t intermediate_const_add(uint64_t a, uint64_t b, uint64_t constant) {
-    return a + constant;
+    return a + b + constant;
 }
 
 uint64_t intermediate_const_xor(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)b;
     return a ^ constant;
 }
 
 uint64_t intermediate_const_sub(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)b;
     return a - constant;
 }
 
 uint64_t intermediate_ones_complement(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return ~(a + b);
 }
 
 uint64_t intermediate_twos_complement(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return (~(a + b)) + 1;
 }
 

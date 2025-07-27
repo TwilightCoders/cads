@@ -2,26 +2,33 @@
 
 // Basic arithmetic and logical operations
 uint64_t basic_add(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;  // Unused for basic operations
     return a + b;
 }
 
 uint64_t basic_sub(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return a - b;
 }
 
 uint64_t basic_xor(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return a ^ b;
 }
 
 uint64_t basic_and(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return a & b;
 }
 
 uint64_t basic_or(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant;
     return a | b;
 }
 
 uint64_t basic_identity(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)b;
+    (void)constant;
     return a;
 }
 

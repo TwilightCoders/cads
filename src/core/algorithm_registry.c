@@ -12,6 +12,18 @@ uint64_t basic_xor_wrapper(uint64_t a, uint64_t b, uint64_t constant);
 uint64_t basic_and_wrapper(uint64_t a, uint64_t b, uint64_t constant);
 uint64_t basic_or_wrapper(uint64_t a, uint64_t b, uint64_t constant);
 uint64_t basic_identity_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_not_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_lshift_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_rshift_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_mul_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_div_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_mod_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_negate_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_const_add_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_const_xor_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_const_sub_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_ones_complement_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t intermediate_twos_complement_wrapper(uint64_t a, uint64_t b, uint64_t constant);
 
 // Global algorithm registry
 static algorithm_registry_entry_t* g_algorithm_registry = NULL;
@@ -37,18 +49,18 @@ static const algorithm_registry_entry_t master_registry[] = {
     {OP_IDENTITY, COMPLEXITY_BASIC, "ID", "Pass-through", false, basic_identity_wrapper, 1000000.0},
     
     // INTERMEDIATE algorithms (12 total)
-    {OP_NOT, COMPLEXITY_INTERMEDIATE, "NOT", "Bitwise NOT", false, NULL, 500000.0},
-    {OP_LSHIFT, COMPLEXITY_INTERMEDIATE, "LSH", "Left shift", false, NULL, 500000.0},
-    {OP_RSHIFT, COMPLEXITY_INTERMEDIATE, "RSH", "Right shift", false, NULL, 500000.0},
-    {OP_MUL, COMPLEXITY_INTERMEDIATE, "MUL", "Multiplication", false, NULL, 300000.0},
-    {OP_DIV, COMPLEXITY_INTERMEDIATE, "DIV", "Division", false, NULL, 100000.0},
-    {OP_MOD, COMPLEXITY_INTERMEDIATE, "MOD", "Modulo", false, NULL, 100000.0},
-    {OP_NEGATE, COMPLEXITY_INTERMEDIATE, "NEG", "Two's complement negation", false, NULL, 500000.0},
-    {OP_CONST_ADD, COMPLEXITY_INTERMEDIATE, "C+", "Add constant", true, NULL, 500000.0},
-    {OP_CONST_XOR, COMPLEXITY_INTERMEDIATE, "C^", "XOR with constant", true, NULL, 500000.0},
-    {OP_CONST_SUB, COMPLEXITY_INTERMEDIATE, "C-", "Subtract constant", true, NULL, 500000.0},
-    {OP_ONES_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "1COMP", "One's complement sum", false, NULL, 300000.0},
-    {OP_TWOS_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "2COMP", "Two's complement sum", false, NULL, 300000.0},
+    {OP_NOT, COMPLEXITY_INTERMEDIATE, "NOT", "Bitwise NOT", false, intermediate_not_wrapper, 500000.0},
+    {OP_LSHIFT, COMPLEXITY_INTERMEDIATE, "LSH", "Left shift", false, intermediate_lshift_wrapper, 500000.0},
+    {OP_RSHIFT, COMPLEXITY_INTERMEDIATE, "RSH", "Right shift", false, intermediate_rshift_wrapper, 500000.0},
+    {OP_MUL, COMPLEXITY_INTERMEDIATE, "MUL", "Multiplication", false, intermediate_mul_wrapper, 300000.0},
+    {OP_DIV, COMPLEXITY_INTERMEDIATE, "DIV", "Division", false, intermediate_div_wrapper, 100000.0},
+    {OP_MOD, COMPLEXITY_INTERMEDIATE, "MOD", "Modulo", false, intermediate_mod_wrapper, 100000.0},
+    {OP_NEGATE, COMPLEXITY_INTERMEDIATE, "NEG", "Two's complement negation", false, intermediate_negate_wrapper, 500000.0},
+    {OP_CONST_ADD, COMPLEXITY_INTERMEDIATE, "C+", "Add constant", true, intermediate_const_add_wrapper, 500000.0},
+    {OP_CONST_XOR, COMPLEXITY_INTERMEDIATE, "C^", "XOR with constant", true, intermediate_const_xor_wrapper, 500000.0},
+    {OP_CONST_SUB, COMPLEXITY_INTERMEDIATE, "C-", "Subtract constant", true, intermediate_const_sub_wrapper, 500000.0},
+    {OP_ONES_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "1COMP", "One's complement sum", false, intermediate_ones_complement_wrapper, 300000.0},
+    {OP_TWOS_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "2COMP", "Two's complement sum", false, intermediate_twos_complement_wrapper, 300000.0},
     
     // ADVANCED algorithms (11 total)
     {OP_ROTLEFT, COMPLEXITY_ADVANCED, "ROTL", "Rotate left", false, NULL, 200000.0},
@@ -64,7 +76,7 @@ static const algorithm_registry_entry_t master_registry[] = {
     {OP_CHECKSUM_VARIANT, COMPLEXITY_ADVANCED, "CVAR", "Checksum variant", true, NULL, 20000.0}
 };
 
-// Wrapper functions for basic operations (example implementation)
+// Wrapper functions for basic operations
 uint64_t basic_add_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
     return basic_add(a, b, constant);
 }
@@ -87,6 +99,55 @@ uint64_t basic_or_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
 
 uint64_t basic_identity_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
     return basic_identity(a, b, constant);
+}
+
+// Wrapper functions for intermediate operations
+uint64_t intermediate_not_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_not(a, b, constant);
+}
+
+uint64_t intermediate_lshift_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_lshift(a, b, constant);
+}
+
+uint64_t intermediate_rshift_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_rshift(a, b, constant);
+}
+
+uint64_t intermediate_mul_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_mul(a, b, constant);
+}
+
+uint64_t intermediate_div_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_div(a, b, constant);
+}
+
+uint64_t intermediate_mod_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_mod(a, b, constant);
+}
+
+uint64_t intermediate_negate_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_negate(a, b, constant);
+}
+
+uint64_t intermediate_const_add_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_const_add(a, b, constant);
+}
+
+uint64_t intermediate_const_xor_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_const_xor(a, b, constant);
+}
+
+uint64_t intermediate_const_sub_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_const_sub(a, b, constant);
+}
+
+uint64_t intermediate_ones_complement_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_ones_complement(a, b, constant);
+}
+
+uint64_t intermediate_twos_complement_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return intermediate_twos_complement(a, b, constant);
 }
 
 bool initialize_algorithm_registry(void) {
