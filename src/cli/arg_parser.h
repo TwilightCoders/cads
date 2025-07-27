@@ -15,11 +15,13 @@ typedef struct {
     size_t checksum_size;
     bool verbose;
     bool little_endian;                // Checksum byte order
+    bool early_exit;                   // Exit after finding first solution
+    int max_solutions;                 // Maximum solutions to find (0 = unlimited)
     const char* input_file;            // Input packet file
     const char* output_file;           // JSON output file
     const char* resume_file;           // Checkpoint file
     int progress_interval;
-    int threads;                       // Future: parallel processing
+    int threads;                       // Number of parallel threads (0 = auto-detect)
 } cli_args_t;
 
 // Parse command line arguments

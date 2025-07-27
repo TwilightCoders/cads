@@ -78,6 +78,8 @@ typedef struct {
     int max_constants;                 // Maximum constant value to test
     size_t checksum_size;              // Expected checksum size in bytes (1-8)
     bool verbose;
+    bool early_exit;                   // Exit after finding first solution
+    int max_solutions;                 // Maximum solutions to find (0 = unlimited)
     const char* output_file;
     const char* resume_file;
     int progress_interval;
