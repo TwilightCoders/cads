@@ -19,13 +19,14 @@ CORE_SOURCES = $(SRC_DIR)/src/core/packet_data.c \
                $(SRC_DIR)/src/core/progress_tracker.c \
                $(SRC_DIR)/src/algorithms/basic_ops.c \
                $(SRC_DIR)/src/algorithms/intermediate_ops.c \
-               $(SRC_DIR)/src/utils/field_combiner.c
+               $(SRC_DIR)/src/utils/field_combiner.c \
+               $(SRC_DIR)/src/utils/config.c
 
 UNITY_SOURCES = $(TEST_DIR)/unity.c
 
 # Test executables (with build directory)
 UNIT_TESTS = $(BUILD_DIR)/test_algorithm_operations $(BUILD_DIR)/test_packet_data $(BUILD_DIR)/test_field_combiner
-INTEGRATION_TESTS = $(BUILD_DIR)/test_forj_algorithm $(BUILD_DIR)/test_search_engine $(BUILD_DIR)/test_packet_discovery
+INTEGRATION_TESTS = $(BUILD_DIR)/test_forj_algorithm $(BUILD_DIR)/test_search_engine $(BUILD_DIR)/test_packet_discovery $(BUILD_DIR)/test_performance_profile $(BUILD_DIR)/test_rate_calculation
 
 ALL_TESTS = $(UNIT_TESTS) $(INTEGRATION_TESTS)
 
@@ -54,6 +55,12 @@ $(BUILD_DIR)/test_search_engine: $(INTEGRATION_DIR)/test_search_engine.c $(UNITY
 	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
 
 $(BUILD_DIR)/test_packet_discovery: $(INTEGRATION_DIR)/test_packet_discovery.c $(UNITY_SOURCES) $(CORE_SOURCES) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
+
+$(BUILD_DIR)/test_performance_profile: $(INTEGRATION_DIR)/profile_test.c $(UNITY_SOURCES) $(CORE_SOURCES) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
+
+$(BUILD_DIR)/test_rate_calculation: $(INTEGRATION_DIR)/test_rate.c $(UNITY_SOURCES) $(CORE_SOURCES) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
 
 # Run all tests
