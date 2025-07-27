@@ -1,0 +1,143 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "CADS Configuration",
+  "scopeName": "source.cads",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#sections"
+    },
+    {
+      "include": "#config-entries"
+    },
+    {
+      "include": "#packet-entries"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.cads",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "sections": {
+      "patterns": [
+        {
+          "name": "entity.name.section.cads",
+          "match": "^\\s*\\[(config|packets)\\]\\s*$",
+          "captures": {
+            "1": {
+              "name": "keyword.other.section.cads"
+            }
+          }
+        }
+      ]
+    },
+    "config-entries": {
+      "patterns": [
+        {
+          "match": "^\\s*(name|description)\\s*(=)\\s*(.*)$",
+          "captures": {
+            "1": {
+              "name": "variable.other.property.cads"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.cads"
+            },
+            "3": {
+              "name": "string.unquoted.cads"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(complexity)\\s*(=)\\s*(basic|intermediate|advanced)\\s*$",
+          "captures": {
+            "1": {
+              "name": "variable.other.property.cads"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.cads"
+            },
+            "3": {
+              "name": "constant.language.complexity.cads"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(max_fields|max_constants|max_solutions|progress_interval)\\s*(=)\\s*(\\d+)\\s*$",
+          "captures": {
+            "1": {
+              "name": "variable.other.property.cads"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.cads"
+            },
+            "3": {
+              "name": "constant.numeric.integer.cads"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(early_exit|verbose)\\s*(=)\\s*(true|false|yes|no|on|off|1|0)\\s*$",
+          "captures": {
+            "1": {
+              "name": "variable.other.property.cads"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.cads"
+            },
+            "3": {
+              "name": "constant.language.boolean.cads"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(operations)\\s*(=)\\s*(.+)$",
+          "captures": {
+            "1": {
+              "name": "variable.other.property.cads"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.cads"
+            },
+            "3": {
+              "patterns": [
+                {
+                  "name": "entity.name.function.operation.cads",
+                  "match": "\\b(identity|add|xor|ones_complement|const_add|const_sub|const_xor|sub|mul|div|mod)\\b"
+                },
+                {
+                  "name": "punctuation.separator.comma.cads",
+                  "match": ","
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "packet-entries": {
+      "patterns": [
+        {
+          "match": "^\\s*([0-9a-fA-F]+)\\s+([0-9a-fA-F]+)\\s*(.*)$",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.hex.packet.cads"
+            },
+            "2": {
+              "name": "constant.numeric.hex.checksum.cads"
+            },
+            "3": {
+              "name": "string.unquoted.description.cads"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

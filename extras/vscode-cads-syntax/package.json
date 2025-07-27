@@ -1,0 +1,40 @@
+{
+  "name": "cads-syntax",
+  "displayName": "CADS Configuration Syntax",
+  "description": "Syntax highlighting for CADS (Checksum Algorithm Discovery System) configuration files",
+  "version": "1.0.0",
+  "publisher": "twilightcoders",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "cads",
+        "aliases": [
+          "CADS Configuration",
+          "cads"
+        ],
+        "extensions": [
+          ".cads"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cads",
+        "scopeName": "source.cads",
+        "path": "./syntaxes/cads.tmLanguage.json"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/twilightcoders/cads.git"
+  },
+  "license": "MIT"
+}

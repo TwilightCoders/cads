@@ -1,0 +1,45 @@
+# CADS Configuration Demo - Syntax Highlighting Example
+# This file demonstrates all supported syntax elements
+
+[config]
+# Basic configuration properties
+name = Demo Configuration File
+description = Comprehensive syntax highlighting demo for CADS files
+
+# Complexity levels with keyword highlighting
+complexity = advanced
+
+# Numeric properties
+max_fields = 8
+max_constants = 256
+max_solutions = 5
+progress_interval = 250
+
+# Boolean properties (multiple formats supported)
+early_exit = true
+verbose = yes
+
+# Operation lists with comma separation
+operations = identity,add,xor,ones_complement,const_add,const_sub,const_xor,sub,mul,div,mod
+
+[packets]
+# Packet data section with hex highlighting
+# Format: packet_hex checksum_hex [optional_description]
+
+# Simple packets
+deadbeef 42 Simple_Test_Packet
+cafebabe a5 Another_Example
+
+# Radio protocol examples
+9c30010000000000 31 CH1_Low_Channel
+9c300f0000010000 3e CH15_High_Channel
+9c30020109000000 3a CH2_CTCSS_Mode
+
+# Complex hex patterns
+ff00ff00aa55aa55 cc Complex_Pattern_Demo
+1234567890abcdef e7 Long_Hex_Sequence
+
+# Comments can appear anywhere
+# Multi-line packet data examples
+0123456789abcdef 99 # Inline comments supported
+fedcba0987654321 66 Another_Complex_Case
