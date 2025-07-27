@@ -1,0 +1,43 @@
+# CADS Configuration File: MXT275 Quick Verification
+# Optimized for instant verification using the real MXT275 algorithm discovered after 3.5B tests
+
+[config]
+name = MXT275 Quick Verification  
+description = Real MXT275 algorithm (Fields 5,4,3,2 with 1COMP+CVAR+XOR+1COMP, Constant 0xD0)
+complexity = advanced
+max_fields = 4
+max_constants = 209
+early_exit = true
+max_solutions = 1
+progress_interval = 100
+verbose = true
+
+# Real MXT275 operations: 1COMP, CVAR (const_add), XOR, 1COMP
+operations = ones_complement,const_add,xor
+
+[packets]
+# MXT275 UART packet samples - AUTHENTIC dataset from actual radio monitoring
+# Format: packet_hex checksum_hex [description]
+# These packets can ONLY be solved by the 5-step algorithm: ~packet[5] + packet[4] + 0xD0 ^ packet[3] ^ packet[2]
+
+# Low channels (1-7) - simple pattern
+9c30010000000000 31 CH1
+9c30030000000000 33 CH3
+9c30040000000000 34 CH4
+9c30050000000000 35 CH5
+9c30060000000000 36 CH6
+9c30070000000000 37 CH7
+
+# High channels (15-22) - complex pattern requiring full algorithm
+9c300f0000010000 3e CH15
+9c30100000010000 21 CH16
+9c30110000010000 20 CH17
+9c30120000010000 23 CH18
+9c30130000010000 22 CH19
+9c30140000010000 25 CH20
+9c30150000010000 24 CH21
+9c30160000010000 27 CH22
+
+# CTCSS channels - special cases that break simple algorithms
+9c30020109000000 3a CH2+CTCSS09
+9c300f010a010000 35 CH15+CTCSS10

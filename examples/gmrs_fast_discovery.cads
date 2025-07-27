@@ -1,0 +1,35 @@
+# CADS Configuration File: Fast GMRS Radio Analysis
+# Optimized for quick discovery of simple GMRS radio checksums
+
+[config]  
+name = GMRS Fast Discovery
+description = Quick analysis using basic operations for GMRS radio packets
+complexity = basic
+max_fields = 3
+max_constants = 64
+early_exit = true
+max_solutions = 1
+progress_interval = 500
+verbose = true
+
+# Minimal operation set for fast discovery
+operations = identity,add,xor
+
+[packets]
+# GMRS radio packet samples with known checksums
+9c30010000000000 31 CH1
+9c30030000000000 33 CH3
+9c30040000000000 34 CH4
+9c30050000000000 35 CH5
+9c30060000000000 36 CH6
+9c30070000000000 37 CH7
+9c30080000000000 38 CH8
+9c30090000000000 39 CH9
+9c300a0000000000 3a CH10
+9c300b0000000000 3b CH11
+9c300c0000000000 3c CH12
+9c300d0000000000 3d CH13
+9c300e0000000000 3e CH14
+9c300f0000000000 3f CH15
+9c30100000000000 40 CH16
+9c30110000000000 41 CH17

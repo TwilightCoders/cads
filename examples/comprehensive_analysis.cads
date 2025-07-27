@@ -1,0 +1,27 @@
+# CADS Configuration File: Comprehensive Checksum Analysis
+# Full-scale analysis with all available algorithms
+
+[config]
+name = Comprehensive Checksum Analysis  
+description = Exhaustive search using all available algorithms and operations
+complexity = advanced
+max_fields = 6
+max_constants = 256
+early_exit = false
+max_solutions = 10
+progress_interval = 1000
+verbose = true
+
+# Use all available operations for thorough analysis
+# (leaving operations unspecified uses all complexity-level operations)
+
+[packets]
+# Mixed packet samples from different radio protocols
+9c30010000000000 31 GMRS_CH1
+9c30020000000000 32 GMRS_CH2
+aa55123456789abc cd Protocol_A_Sample1
+deadbeef12345678 89 Protocol_B_Sample1  
+0102030405060708 36 Test_Pattern_1
+fedcba9876543210 a5 Test_Pattern_2
+1122334455667788 44 Linear_Pattern
+8877665544332211 44 Reverse_Pattern

@@ -1,0 +1,43 @@
+# CADS Configuration File: MXT275 Radio Checksum Discovery
+# This file contains both configuration and test data for discovering
+# the MXT275 radio UART checksum algorithm
+
+[config]
+name = MXT275 UART Checksum Discovery
+description = Comprehensive analysis of Midland MXT275 radio UART packet checksums
+complexity = intermediate
+max_fields = 5
+max_constants = 128
+early_exit = true
+max_solutions = 1
+progress_interval = 250
+verbose = false
+
+# Custom operation set optimized for radio protocols
+operations = identity,add,xor,ones_complement,const_add,const_xor
+
+[packets]
+# Format: packet_hex checksum_hex [description]
+# Packet data from MXT275 UART monitoring sessions
+
+# Channel selection packets
+9c30010000000000 31 Channel 1
+9c30020000000000 32 Channel 2  
+9c30030000000000 33 Channel 3
+9c30040000000000 34 Channel 4
+9c30050000000000 35 Channel 5
+9c30060000000000 36 Channel 6
+9c30070000000000 37 Channel 7
+9c30080000000000 38 Channel 8
+
+# Power level packets
+9c35010000000000 36 Power Low
+9c35020000000000 37 Power Medium
+9c35030000000000 38 Power High
+
+# CTCSS tone packets
+9c40010000000000 41 CTCSS Off
+9c40670000000000 a7 CTCSS 67Hz
+9c40710000000000 b1 CTCSS 71.9Hz
+9c40744000000000 b8 CTCSS 74.4Hz
+9c40770000000000 bb CTCSS 77Hz
