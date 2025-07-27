@@ -4,6 +4,7 @@
 #include "../../include/checksum_engine.h"
 #include "../../src/core/packet_data.h"
 #include "../../src/core/progress_tracker.h"
+#include "../../src/utils/config.h"
 
 void setUp(void) {
     // No setup needed - search engine initializes its own registry
@@ -23,16 +24,11 @@ void test_forj_algorithm_discovery(void) {
     TEST_ASSERT(load_success);
     
     // Create focused search configuration for Forj algorithm discovery
-    search_config_t config = {
-        .complexity = COMPLEXITY_INTERMEDIATE,  // Need 1COMP and CONST_ADD operations
-        .max_fields = 4,        // Reduced for faster testing (still finds Forj algorithm)
-        .max_constants = 32,    // Reduced search space - focuses on smaller constants
-        .checksum_size = 1,
-        .verbose = false,       
-        .early_exit = true,     // Stop at first solution
-        .max_solutions = 1,     
-        .progress_interval_ms = 250
-    };
+    search_config_t config = create_default_search_config();  // Uses INTERMEDIATE complexity
+    config.max_fields = 4;        // Reduced for faster testing (still finds Forj algorithm)
+    config.max_constants = 32;    // Reduced search space - focuses on smaller constants
+    enable_early_exit(&config, 1);
+    set_progress_interval(&config, 250);
     
     // Create search results
     search_results_t* results = create_search_results(10);
@@ -82,19 +78,10 @@ void test_forj_discovery_with_custom_operations(void) {
         OP_IDENTITY
     };
     
-    search_config_t config = {
-        .complexity = COMPLEXITY_INTERMEDIATE,
-        .max_fields = 4,        // Reduced for faster testing
-        .max_constants = 16,    // Much smaller search space with custom operations
-        .checksum_size = 1,
-        .verbose = false,
-        .early_exit = true,
-        .max_solutions = 1,
-        .progress_interval_ms = 250,
-        .use_custom_operations = true,
-        .custom_operations = forj_operations,
-        .custom_operation_count = sizeof(forj_operations) / sizeof(forj_operations[0])
-    };
+    search_config_t config = create_custom_operation_config(forj_operations, 
+                                                           sizeof(forj_operations) / sizeof(forj_operations[0]));
+    config.max_fields = 4;        // Reduced for faster testing
+    config.max_constants = 16;    // Much smaller search space with custom operations
     
     // Create search results
     search_results_t* results = create_search_results(10);

@@ -4,6 +4,7 @@
 #include "../../include/checksum_engine.h"
 #include "../../src/core/packet_data.h"
 #include "../../src/core/progress_tracker.h"
+#include "../../src/utils/config.h"
 
 void setUp(void) {
     // No setup needed - search engine initializes its own registry
@@ -51,16 +52,10 @@ void test_mxt275_algorithm_discovery(void) {
     TEST_ASSERT(success);
     
     // Create focused search configuration (using working parameters)
-    search_config_t config = {
-        .complexity = COMPLEXITY_INTERMEDIATE,  // Need advanced operations for MXT275
-        .max_fields = 5,        // Increased to match working test
-        .max_constants = 256,   // Increased to match working test
-        .checksum_size = 1,
-        .verbose = false,       
-        .early_exit = true,     // Stop at first solution
-        .max_solutions = 1,     
-        .progress_interval_ms = 250
-    };
+    search_config_t config = create_default_search_config();
+    config.max_fields = 5;
+    enable_early_exit(&config, 1);
+    set_progress_interval(&config, 250);
     
     // Create search results
     search_results_t* results = create_search_results(10);
@@ -117,19 +112,9 @@ void test_targeted_mxt275_discovery(void) {
         OP_IDENTITY
     };
     
-    search_config_t config = {
-        .complexity = COMPLEXITY_INTERMEDIATE,
-        .max_fields = 5,        // Increased to match working test
-        .max_constants = 256,   // Increased to match working test
-        .checksum_size = 1,
-        .verbose = false,
-        .early_exit = true,
-        .max_solutions = 1,
-        .progress_interval_ms = 250,
-        .use_custom_operations = true,
-        .custom_operations = mxt275_operations,
-        .custom_operation_count = sizeof(mxt275_operations) / sizeof(mxt275_operations[0])
-    };
+    search_config_t config = create_custom_operation_config(mxt275_operations, 
+                                                           sizeof(mxt275_operations) / sizeof(mxt275_operations[0]));
+    config.max_fields = 5;
     
     // Create search results
     search_results_t* results = create_search_results(10);
@@ -211,19 +196,9 @@ void test_dataset_comparison(void) {
     }
     
     // Test search with GMRS dataset first (should succeed)
-    search_config_t config = {
-        .complexity = COMPLEXITY_INTERMEDIATE,
-        .max_fields = 5,        // Increased from 4 to match working test
-        .max_constants = 256,   // Increased from 16 to match working test  
-        .checksum_size = 1,
-        .verbose = false,
-        .early_exit = true,
-        .max_solutions = 1,
-        .progress_interval_ms = 250,
-        .use_custom_operations = true,
-        .custom_operations = (operation_t[]){OP_IDENTITY, OP_ADD, OP_ONES_COMPLEMENT, OP_CONST_ADD, OP_XOR},
-        .custom_operation_count = 5
-    };
+    operation_t comparison_ops[] = {OP_IDENTITY, OP_ADD, OP_ONES_COMPLEMENT, OP_CONST_ADD, OP_XOR};
+    search_config_t config = create_custom_operation_config(comparison_ops, 5);
+    config.max_fields = 5;
     
     search_results_t* gmrs_results = create_search_results(10);
     progress_tracker_t tracker1 = {0};

@@ -4,6 +4,7 @@
 #include "../../include/checksum_engine.h"
 #include "../../src/core/packet_data.h"
 #include "../../src/core/progress_tracker.h"
+#include "../../src/utils/config.h"
 
 void setUp(void) {
     // No setup needed - search engine initializes its own registry
@@ -26,19 +27,8 @@ void test_custom_operation_selection(void) {
         OP_IDENTITY, OP_ADD, OP_ONES_COMPLEMENT, OP_CONST_ADD, OP_XOR
     };
     
-    search_config_t config = {
-        .complexity = COMPLEXITY_INTERMEDIATE,
-        .max_fields = 5,
-        .max_constants = 256,
-        .checksum_size = 1,
-        .verbose = false,
-        .early_exit = true,
-        .max_solutions = 1,
-        .progress_interval_ms = 250,
-        .custom_operations = forj_operations,
-        .custom_operation_count = 5,
-        .use_custom_operations = true
-    };
+    search_config_t config = create_custom_operation_config(forj_operations, 5);
+    config.max_fields = 5;
     
     search_results_t* results = create_search_results(10);
     TEST_ASSERT_NOT_NULL(results);
@@ -69,17 +59,8 @@ void test_standard_complexity_search(void) {
     bool load_success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
     TEST_ASSERT(load_success);
     
-    search_config_t config = {
-        .complexity = COMPLEXITY_BASIC,  // Use basic operations only
-        .max_fields = 3,                 // Limit search space
-        .max_constants = 10,             // Small constant range
-        .checksum_size = 1,
-        .verbose = false,
-        .early_exit = true,
-        .max_solutions = 1,
-        .progress_interval_ms = 250,
-        .use_custom_operations = false   // Use standard complexity
-    };
+    search_config_t config = create_basic_search_config(3, 10);
+    // Already uses standard complexity by default
     
     search_results_t* results = create_search_results(10);
     TEST_ASSERT_NOT_NULL(results);
@@ -135,10 +116,8 @@ void test_search_results_validation(void) {
 
 // Test early exit conditions
 void test_early_exit_conditions(void) {
-    search_config_t config = {
-        .early_exit = true,
-        .max_solutions = 1
-    };
+    search_config_t config = create_default_search_config();
+    enable_early_exit(&config, 1);
     
     search_results_t results = {0};
     results.solution_count = 0;
@@ -151,7 +130,7 @@ void test_early_exit_conditions(void) {
     TEST_ASSERT(!should_continue_search(&results, &config));
     
     // Test max solutions limit
-    config.early_exit = false;
+    disable_early_exit(&config);
     config.max_solutions = 3;
     results.solution_count = 2;
     TEST_ASSERT(should_continue_search(&results, &config));
