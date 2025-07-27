@@ -17,11 +17,18 @@ bool test_operation_sequence(const packet_dataset_t* dataset,
                             int max_depth,
                             uint8_t constant,
                             search_results_t* results,
-                            uint64_t* tests_performed) {
+                            uint64_t* tests_performed,
+                            progress_tracker_t* tracker) {
     
     // Base case: we've built a complete operation sequence, test it
     if (current_depth >= max_depth) {
         (*tests_performed)++;
+        
+        // Update progress bar periodically
+        if (tracker && *tests_performed % config->progress_interval == 0) {
+            update_progress(tracker, *tests_performed, results->solution_count);
+            display_detailed_progress(tracker, "Testing");
+        }
         
         // Test this operation sequence against all packets
         bool all_match = true;
@@ -84,7 +91,8 @@ bool test_operation_sequence(const packet_dataset_t* dataset,
             solution.validated = true;
             
             if (add_solution(results, &solution)) {
-                printf("🎉 SOLUTION #%zu FOUND!\n", results->solution_count);
+                // Move cursor down from progress area and print solution (preserving progress display)
+                printf("\n🎉 SOLUTION #%zu FOUND!\n", results->solution_count);
                 printf("   Fields: ");
                 for (int f = 0; f < field_count; f++) {
                     printf("%d ", field_permutation[f]);
@@ -112,7 +120,7 @@ bool test_operation_sequence(const packet_dataset_t* dataset,
         
         if (test_operation_sequence(dataset, config, field_permutation, field_count,
                                   algorithms, algorithm_count, operation_sequence,
-                                  current_depth + 1, max_depth, constant, results, tests_performed)) {
+                                  current_depth + 1, max_depth, constant, results, tests_performed, tracker)) {
             // Early exit if solution found and early exit enabled
             if (config->early_exit) {
                 return true;
@@ -194,12 +202,29 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
     printf("Max fields: %d, Max constants: %d\n", config->max_fields, config->max_constants);
     printf("Max operation depth: %d\n\n", config->max_fields - 1);
     
+    // Initialize progress tracker
+    if (tracker) {
+        // Simple factorial-based search space estimate
+        // Approximate: P(packet_length, max_fields) × operations^max_fields × constants
+        uint64_t permutations = 1;
+        for (int i = 0; i < config->max_fields && i < (int)min_packet_length; i++) {
+            permutations *= (min_packet_length - i);
+        }
+        
+        uint64_t operation_sequences = 1;
+        for (int i = 0; i < config->max_fields - 1; i++) {
+            operation_sequences *= algorithm_count;
+        }
+        
+        uint64_t estimated_tests = permutations * operation_sequences * config->max_constants;
+        init_progress_tracker(tracker, estimated_tests, config->progress_interval);
+    }
+    
     uint64_t tests_performed = 0;
     bool search_interrupted = false;
     
     // Test different complexity levels (1 to max_fields)
     for (int complexity_level = 1; complexity_level <= config->max_fields && !search_interrupted; complexity_level++) {
-        printf("Testing complexity level %d (up to %d fields)...\n", complexity_level, complexity_level);
         
         // Generate all field combinations (bit masks)
         uint64_t max_mask = (1ULL << min_packet_length) - 1;
@@ -236,7 +261,7 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
                         
                         if (test_operation_sequence(dataset, config, permutations[p], field_count,
                                                   algorithms, algorithm_count, operation_sequence,
-                                                  0, max_operation_depth, constant, results, &tests_performed)) {
+                                                  0, max_operation_depth, constant, results, &tests_performed, tracker)) {
                             // Found a solution
                             if (config->early_exit) {
                                 search_interrupted = true;
@@ -246,12 +271,10 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
                         }
                     }
                     
-                    // Update progress occasionally
-                    if (tracker && tests_performed % 1000000 == 0) {
+                    // Update progress occasionally  
+                    if (tracker && tests_performed % config->progress_interval == 0) {
                         update_progress(tracker, tests_performed, results->solution_count);
-                        if (config->verbose) {
-                            display_detailed_progress(tracker, "Recursive");
-                        }
+                        display_detailed_progress(tracker, "Recursive");
                     }
                 }
             }
