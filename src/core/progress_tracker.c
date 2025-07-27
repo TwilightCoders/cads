@@ -5,6 +5,17 @@
 #include <string.h>
 #include <math.h>
 
+// Generic exponential moving average function
+static double exponential_moving_average(double current_value, double previous_smoothed, double alpha, bool is_first_update) {
+    if (is_first_update || previous_smoothed == 0.0) {
+        return current_value;
+    }
+    if (current_value <= 0) {
+        return previous_smoothed;  // Keep previous value if current is invalid
+    }
+    return alpha * current_value + (1.0 - alpha) * previous_smoothed;
+}
+
 // Initialize progress tracker
 void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinations, int interval_ms) {
     if (!tracker) return;
@@ -14,6 +25,7 @@ void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinati
     tracker->tests_at_last_update = 0;
     tracker->avg_tests_per_second = 0.0;
     tracker->smoothed_rate = 0.0;
+    tracker->smoothed_eta = 0.0;
     gettimeofday(&tracker->start_time, NULL);
     tracker->last_update = tracker->start_time;
     tracker->last_progress_display = tracker->start_time;
@@ -50,14 +62,22 @@ void update_progress(progress_tracker_t* tracker, uint64_t completed_tests, int 
     
     // Update smoothed rate using exponential moving average
     // Alpha = 0.2 gives good balance between responsiveness and stability
-    const double alpha = 0.2;
-    if (tracker->smoothed_rate == 0.0) {
-        // First update - initialize with current rate
-        tracker->smoothed_rate = instantaneous_rate;
-    } else if (instantaneous_rate > 0) {
-        // Exponential moving average: new_rate = alpha * current + (1-alpha) * previous
-        tracker->smoothed_rate = alpha * instantaneous_rate + (1.0 - alpha) * tracker->smoothed_rate;
+    const double alpha_rate = 0.2;
+    bool is_first_rate_update = (tracker->smoothed_rate == 0.0);
+    tracker->smoothed_rate = exponential_moving_average(instantaneous_rate, tracker->smoothed_rate, alpha_rate, is_first_rate_update);
+    
+    // Update smoothed ETA using more aggressive smoothing for stability
+    // Alpha = 0.5 for ETA gives more stable estimates than rate smoothing
+    const double alpha_eta = 0.5;
+    uint64_t remaining_tests = tracker->total_combinations - tracker->completed_tests;
+    
+    // Calculate raw ETA using smoothed rate (more stable than instantaneous rate)
+    if (tracker->smoothed_rate > 0 && remaining_tests > 0) {
+        double raw_eta = (double)remaining_tests / tracker->smoothed_rate;
+        bool is_first_eta_update = (tracker->smoothed_eta == 0.0);
+        tracker->smoothed_eta = exponential_moving_average(raw_eta, tracker->smoothed_eta, alpha_eta, is_first_eta_update);
     }
+    // If we can't calculate a new ETA, keep the previous smoothed value (don't reset to 0)
     
     // Update tracking variables
     tracker->tests_at_last_update = completed_tests;
@@ -81,12 +101,15 @@ void finish_progress(progress_tracker_t* tracker) {
     }
 }
 
-// Calculate ETA in seconds using smoothed rate
+// Calculate ETA in seconds using smoothed rate and ETA smoothing
 double calculate_eta_seconds(const progress_tracker_t* tracker) {
     if (!tracker || tracker->smoothed_rate <= 0) return -1;
     
     uint64_t remaining_tests = tracker->total_combinations - tracker->completed_tests;
-    return (double)remaining_tests / tracker->smoothed_rate;
+    double raw_eta = (double)remaining_tests / tracker->smoothed_rate;
+    
+    // Return the smoothed ETA if we have one, otherwise return raw ETA
+    return tracker->smoothed_eta > 0 ? tracker->smoothed_eta : raw_eta;
 }
 
 // Calculate elapsed time in seconds

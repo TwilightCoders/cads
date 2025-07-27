@@ -67,6 +67,7 @@ typedef struct {
     uint64_t tests_at_last_update;
     double avg_tests_per_second;
     double smoothed_rate;               // Exponential moving average of rate
+    double smoothed_eta;                // Exponential moving average of ETA (in seconds)
     struct timeval start_time;
     struct timeval last_update;
     struct timeval last_progress_display;       // Last time progress was displayed
