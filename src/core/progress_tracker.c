@@ -155,19 +155,52 @@ void format_duration(double seconds, char* buffer, size_t buffer_size) {
 }
 
 // Format large numbers with appropriate units
+// Number formatting scale mapping
+typedef struct {
+    double threshold;
+    double divisor;
+    const char* suffix;
+} number_scale_t;
+
+static const number_scale_t number_scales[] = {
+    {1000000000000.0, 1000000000000.0, "T"},
+    {1000000000.0,    1000000000.0,    "B"},
+    {1000000.0,       1000000.0,       "M"},
+    {1000.0,          1000.0,          "K"},
+    {0.0,             1.0,             ""}  // Base case
+};
+
+static const size_t num_scales = sizeof(number_scales) / sizeof(number_scales[0]);
+
 void format_large_number(uint64_t number, char* buffer, size_t buffer_size) {
     if (!buffer || buffer_size == 0) return;
     
-    if (number >= 1000000000000ULL) {
-        snprintf(buffer, buffer_size, "%.1fT", (double)number / 1000000000000.0);
-    } else if (number >= 1000000000ULL) {
-        snprintf(buffer, buffer_size, "%.1fB", (double)number / 1000000000.0);
-    } else if (number >= 1000000ULL) {
-        snprintf(buffer, buffer_size, "%.1fM", (double)number / 1000000.0);
-    } else if (number >= 1000ULL) {
-        snprintf(buffer, buffer_size, "%.1fK", (double)number / 1000.0);
-    } else {
-        snprintf(buffer, buffer_size, "%llu", (unsigned long long)number);
+    double num = (double)number;
+    
+    for (size_t i = 0; i < num_scales; i++) {
+        if (num >= number_scales[i].threshold) {
+            if (strlen(number_scales[i].suffix) > 0) {
+                snprintf(buffer, buffer_size, "%.1f%s", num / number_scales[i].divisor, number_scales[i].suffix);
+            } else {
+                snprintf(buffer, buffer_size, "%llu", (unsigned long long)number);
+            }
+            return;
+        }
+    }
+}
+
+void format_rate(double rate, char* buffer, size_t buffer_size) {
+    if (!buffer || buffer_size == 0) return;
+    
+    for (size_t i = 0; i < num_scales; i++) {
+        if (rate >= number_scales[i].threshold) {
+            if (strlen(number_scales[i].suffix) > 0) {
+                snprintf(buffer, buffer_size, "%.1f%s", rate / number_scales[i].divisor, number_scales[i].suffix);
+            } else {
+                snprintf(buffer, buffer_size, "%.1f", rate);
+            }
+            return;
+        }
     }
 }
 
@@ -219,16 +252,8 @@ void display_detailed_progress(const progress_tracker_t* tracker, const char* cu
     format_large_number(tracker->completed_tests, completed_str, sizeof(completed_str));
     format_large_number(tracker->total_combinations, total_str, sizeof(total_str));
     
-    // Format rate as floating point with appropriate units
-    if (tracker->smoothed_rate >= 1000000000.0) {
-        snprintf(rate_str, sizeof(rate_str), "%.1fB", tracker->smoothed_rate / 1000000000.0);
-    } else if (tracker->smoothed_rate >= 1000000.0) {
-        snprintf(rate_str, sizeof(rate_str), "%.1fM", tracker->smoothed_rate / 1000000.0);
-    } else if (tracker->smoothed_rate >= 1000.0) {
-        snprintf(rate_str, sizeof(rate_str), "%.1fK", tracker->smoothed_rate / 1000.0);
-    } else {
-        snprintf(rate_str, sizeof(rate_str), "%.1f", tracker->smoothed_rate);
-    }
+    // Format rate using programmatic mapping
+    format_rate(tracker->smoothed_rate, rate_str, sizeof(rate_str));
     
     double elapsed = calculate_elapsed_seconds(tracker);
     format_duration(elapsed, elapsed_str, sizeof(elapsed_str));
@@ -316,7 +341,10 @@ void display_final_summary(const progress_tracker_t* tracker) {
     
     char total_str[32], rate_str[32], elapsed_str[64];
     format_large_number(tracker->completed_tests, total_str, sizeof(total_str));
-    format_large_number((uint64_t)tracker->avg_tests_per_second, rate_str, sizeof(rate_str));
+    // Use smoothed rate which represents actual throughput, not misleading average
+    format_rate(tracker->smoothed_rate, rate_str, sizeof(rate_str));
+    // double corrected_rate = tracker->avg_tests_per_second * (tracker->progress_interval_ms / 1000.0);
+    // format_large_number((uint64_t)corrected_rate, rate_str, sizeof(rate_str));
     
     double elapsed = calculate_elapsed_seconds(tracker);
     format_duration(elapsed, elapsed_str, sizeof(elapsed_str));

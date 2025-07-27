@@ -23,6 +23,7 @@ bool should_display_progress(progress_tracker_t* tracker);
 // Time formatting utilities
 void format_duration(double seconds, char* buffer, size_t buffer_size);
 void format_large_number(uint64_t number, char* buffer, size_t buffer_size);
+void format_rate(double rate, char* buffer, size_t buffer_size);
 
 // Progress bar characters and styling
 #define PROGRESS_BAR_WIDTH 50
