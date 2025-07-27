@@ -92,7 +92,7 @@ double calculate_tests_per_second(const progress_tracker_t* tracker) {
     return tracker->avg_tests_per_second;
 }
 
-// Format duration as human readable string
+// Format duration as human readable string with two most significant units
 void format_duration(double seconds, char* buffer, size_t buffer_size) {
     if (!buffer || buffer_size == 0) return;
     
@@ -101,15 +101,22 @@ void format_duration(double seconds, char* buffer, size_t buffer_size) {
         return;
     }
     
-    int hours = (int)(seconds / 3600);
-    int minutes = (int)((seconds - hours * 3600) / 60);
-    int secs = (int)(seconds - hours * 3600 - minutes * 60);
+    int days = (int)(seconds / 86400);
+    int hours = (int)((seconds - days * 86400) / 3600);
+    int minutes = (int)((seconds - days * 86400 - hours * 3600) / 60);
+    int secs = (int)(seconds - days * 86400 - hours * 3600 - minutes * 60);
     
-    if (hours > 0) {
-        snprintf(buffer, buffer_size, "%dh %dm %ds", hours, minutes, secs);
+    if (days > 0) {
+        // Show days and hours
+        snprintf(buffer, buffer_size, "%dd %dh", days, hours);
+    } else if (hours > 0) {
+        // Show hours and minutes
+        snprintf(buffer, buffer_size, "%dh %dm", hours, minutes);
     } else if (minutes > 0) {
+        // Show minutes and seconds
         snprintf(buffer, buffer_size, "%dm %ds", minutes, secs);
     } else {
+        // Show just seconds
         snprintf(buffer, buffer_size, "%ds", secs);
     }
 }
