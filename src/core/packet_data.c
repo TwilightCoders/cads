@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 // Create a new packet dataset
 packet_dataset_t* create_packet_dataset(size_t initial_capacity) {
@@ -290,6 +291,111 @@ uint64_t extract_checksum_from_packet(const uint8_t* full_packet, size_t packet_
     }
     
     return checksum;
+}
+
+// Load packets from JSON/JSONL format
+bool load_packets_from_json(packet_dataset_t* dataset, const char* filename) {
+    if (!dataset || !filename) return false;
+    
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        fprintf(stderr, "Error opening file %s: %s\n", filename, strerror(errno));
+        return false;
+    }
+    
+    char line[1024];
+    size_t line_number = 0;
+    size_t packets_loaded = 0;
+    
+    while (fgets(line, sizeof(line), file)) {
+        line_number++;
+        
+        // Skip empty lines and comments
+        if (line[0] == '\n' || line[0] == '#' || line[0] == '/') {
+            continue;
+        }
+        
+        // Parse JSON line - simple parsing for our specific format
+        // Expected: {"packet": "9c3001000000", "checksum": "31", "description": "CH1"}
+        
+        char packet_hex[256] = {0};
+        char checksum_hex[16] = {0};
+        char description[128] = {0};
+        
+        // Extract packet data
+        const char* packet_start = strstr(line, "\"packet\"");
+        if (packet_start) {
+            const char* colon = strchr(packet_start, ':');
+            if (colon) {
+                const char* quote_start = strchr(colon, '"');
+                if (quote_start) {
+                    quote_start++; // Skip opening quote
+                    const char* quote_end = strchr(quote_start, '"');
+                    if (quote_end && (quote_end - quote_start) < sizeof(packet_hex) - 1) {
+                        strncpy(packet_hex, quote_start, quote_end - quote_start);
+                    }
+                }
+            }
+        }
+        
+        // Extract checksum
+        const char* checksum_start = strstr(line, "\"checksum\"");
+        if (checksum_start) {
+            const char* colon = strchr(checksum_start, ':');
+            if (colon) {
+                const char* quote_start = strchr(colon, '"');
+                if (quote_start) {
+                    quote_start++; // Skip opening quote
+                    const char* quote_end = strchr(quote_start, '"');
+                    if (quote_end && (quote_end - quote_start) < sizeof(checksum_hex) - 1) {
+                        strncpy(checksum_hex, quote_start, quote_end - quote_start);
+                    }
+                }
+            }
+        }
+        
+        // Extract description
+        const char* desc_start = strstr(line, "\"description\"");
+        if (desc_start) {
+            const char* colon = strchr(desc_start, ':');
+            if (colon) {
+                const char* quote_start = strchr(colon, '"');
+                if (quote_start) {
+                    quote_start++; // Skip opening quote
+                    const char* quote_end = strchr(quote_start, '"');
+                    if (quote_end && (quote_end - quote_start) < sizeof(description) - 1) {
+                        strncpy(description, quote_start, quote_end - quote_start);
+                    }
+                }
+            }
+        }
+        
+        // Validate we got required fields
+        if (strlen(packet_hex) > 0 && strlen(checksum_hex) > 0) {
+            if (strlen(description) == 0) {
+                snprintf(description, sizeof(description), "Packet_%zu", line_number);
+            }
+            
+            // Add packet with 1-byte checksum (default for our use case)
+            if (add_packet_from_hex(dataset, packet_hex, checksum_hex, 1, description)) {
+                packets_loaded++;
+            } else {
+                fprintf(stderr, "Warning: Failed to add packet from line %zu\n", line_number);
+            }
+        } else {
+            fprintf(stderr, "Warning: Failed to parse line %zu: %s", line_number, line);
+        }
+    }
+    
+    fclose(file);
+    
+    if (packets_loaded == 0) {
+        fprintf(stderr, "Error: No valid packets found in %s\n", filename);
+        return false;
+    }
+    
+    printf("\n📦 Loaded %zu packets from %s\n", packets_loaded, filename);
+    return true;
 }
 
 // Validate packet format
