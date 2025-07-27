@@ -117,7 +117,7 @@ $(BUILD_DIR)/tests/integration:
 	@mkdir -p $(BUILD_DIR)/tests/integration
 
 # Phony targets
-.PHONY: clean test install uninstall legacy debug release help
+.PHONY: clean test test-unit test-integration test-clean install uninstall legacy debug release help
 
 # Clean build artifacts
 clean:
@@ -125,13 +125,24 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 # Run tests
-test: $(TEST_TARGETS)
+test:
+	@echo "Running CADS test suite..."
+	@$(MAKE) -C $(TEST_DIR) test
+
+# Run unit tests only
+test-unit:
 	@echo "Running unit tests..."
-	@for test in $(TEST_TARGETS); do \
-		echo "Running $$test..."; \
-		$$test || exit 1; \
-	done
-	@echo "All tests passed!"
+	@$(MAKE) -C $(TEST_DIR) test-unit
+
+# Run integration tests only  
+test-integration:
+	@echo "Running integration tests..."
+	@$(MAKE) -C $(TEST_DIR) test-integration
+
+# Clean tests
+test-clean:
+	@echo "Cleaning test artifacts..."
+	@$(MAKE) -C $(TEST_DIR) clean
 
 # Install to system
 install: $(TARGET)
@@ -161,15 +172,18 @@ release: $(TARGET)
 help:
 	@echo "CADS - Checksum Algorithm Discovery System"
 	@echo "Available targets:"
-	@echo "  all      - Build main executable (default)"
-	@echo "  legacy   - Build original monolithic version"
-	@echo "  test     - Build and run tests"
-	@echo "  debug    - Build with debug symbols"
-	@echo "  release  - Build optimized release version"
-	@echo "  clean    - Remove build artifacts"
-	@echo "  install  - Install to system (/usr/local/bin)"
-	@echo "  uninstall- Remove from system"
-	@echo "  help     - Show this help message"
+	@echo "  all            - Build main executable (default)"
+	@echo "  legacy         - Build original monolithic version"
+	@echo "  test           - Build and run all tests"
+	@echo "  test-unit      - Run unit tests only"
+	@echo "  test-integration - Run integration tests only"
+	@echo "  test-clean     - Clean test artifacts"
+	@echo "  debug          - Build with debug symbols"
+	@echo "  release        - Build optimized release version"
+	@echo "  clean          - Remove build artifacts"
+	@echo "  install        - Install to system (/usr/local/bin)"
+	@echo "  uninstall      - Remove from system"
+	@echo "  help           - Show this help message"
 
 # Dependencies (header files)
 $(ALL_OBJECTS): $(wildcard $(INC_DIR)/*.h)

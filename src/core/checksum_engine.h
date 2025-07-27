@@ -5,16 +5,6 @@
 #include "packet_data.h"
 #include "progress_tracker.h"
 
-// Search result structure
-typedef struct {
-    checksum_solution_t* solutions;    // Array of found solutions
-    size_t solution_count;             // Number of solutions found
-    size_t solution_capacity;          // Capacity of solutions array
-    uint64_t tests_performed;          // Total tests performed
-    bool search_completed;             // Whether search completed fully
-    bool early_exit_triggered;        // Whether early exit was triggered
-} search_results_t;
-
 // Search engine functions
 search_results_t* create_search_results(size_t initial_capacity);
 void free_search_results(search_results_t* results);
