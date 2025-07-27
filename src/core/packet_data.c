@@ -331,7 +331,7 @@ bool load_packets_from_json(packet_dataset_t* dataset, const char* filename) {
                 if (quote_start) {
                     quote_start++; // Skip opening quote
                     const char* quote_end = strchr(quote_start, '"');
-                    if (quote_end && (quote_end - quote_start) < sizeof(packet_hex) - 1) {
+                    if (quote_end && (size_t)(quote_end - quote_start) < sizeof(packet_hex) - 1) {
                         strncpy(packet_hex, quote_start, quote_end - quote_start);
                     }
                 }
@@ -347,7 +347,7 @@ bool load_packets_from_json(packet_dataset_t* dataset, const char* filename) {
                 if (quote_start) {
                     quote_start++; // Skip opening quote
                     const char* quote_end = strchr(quote_start, '"');
-                    if (quote_end && (quote_end - quote_start) < sizeof(checksum_hex) - 1) {
+                    if (quote_end && (size_t)(quote_end - quote_start) < sizeof(checksum_hex) - 1) {
                         strncpy(checksum_hex, quote_start, quote_end - quote_start);
                     }
                 }
@@ -363,7 +363,7 @@ bool load_packets_from_json(packet_dataset_t* dataset, const char* filename) {
                 if (quote_start) {
                     quote_start++; // Skip opening quote
                     const char* quote_end = strchr(quote_start, '"');
-                    if (quote_end && (quote_end - quote_start) < sizeof(description) - 1) {
+                    if (quote_end && (size_t)(quote_end - quote_start) < sizeof(description) - 1) {
                         strncpy(description, quote_start, quote_end - quote_start);
                     }
                 }

@@ -38,7 +38,7 @@ void test_field_combinations(void) {
         }
         
         // Validate field indices are within range
-        for (int i = 0; i < generator->field_count; i++) {
+        for (size_t i = 0; i < generator->field_count; i++) {
             TEST_ASSERT(generator->fields[i] < 4);  // Should be 0-3 for 4-byte packet
         }
     }
