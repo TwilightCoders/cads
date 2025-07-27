@@ -65,6 +65,7 @@ typedef struct {
     uint64_t completed_tests;
     uint64_t tests_at_last_update;
     double avg_tests_per_second;
+    double smoothed_rate;               // Exponential moving average of rate
     time_t start_time;
     time_t last_update;
     int solutions_found;

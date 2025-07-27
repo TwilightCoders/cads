@@ -17,6 +17,7 @@ double calculate_tests_per_second(const progress_tracker_t* tracker);
 void display_progress_bar(const progress_tracker_t* tracker);
 void display_detailed_progress(const progress_tracker_t* tracker, const char* current_operation);
 void display_final_summary(const progress_tracker_t* tracker);
+void clear_progress_line(void);
 
 // Time formatting utilities
 void format_duration(double seconds, char* buffer, size_t buffer_size);

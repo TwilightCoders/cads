@@ -12,6 +12,7 @@ void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinati
     tracker->completed_tests = 0;
     tracker->tests_at_last_update = 0;
     tracker->avg_tests_per_second = 0.0;
+    tracker->smoothed_rate = 0.0;
     tracker->start_time = time(NULL);
     tracker->last_update = tracker->start_time;
     tracker->solutions_found = 0;
@@ -26,13 +27,33 @@ void update_progress(progress_tracker_t* tracker, uint64_t completed_tests, int 
     tracker->completed_tests = completed_tests;
     tracker->solutions_found = solutions_found;
     
-    // Calculate tests per second
+    // Calculate instantaneous rate since last update
+    double time_since_last = difftime(current_time, tracker->last_update);
+    double instantaneous_rate = 0.0;
+    if (time_since_last > 0) {
+        uint64_t tests_since_last = completed_tests - tracker->tests_at_last_update;
+        instantaneous_rate = (double)tests_since_last / time_since_last;
+    }
+    
+    // Calculate overall average rate
     double elapsed = difftime(current_time, tracker->start_time);
     if (elapsed > 0) {
         tracker->avg_tests_per_second = (double)completed_tests / elapsed;
     }
     
-    // Update timestamp
+    // Update smoothed rate using exponential moving average
+    // Alpha = 0.2 gives good balance between responsiveness and stability
+    const double alpha = 0.2;
+    if (tracker->smoothed_rate == 0.0) {
+        // First update - initialize with current rate
+        tracker->smoothed_rate = instantaneous_rate;
+    } else if (instantaneous_rate > 0) {
+        // Exponential moving average: new_rate = alpha * current + (1-alpha) * previous
+        tracker->smoothed_rate = alpha * instantaneous_rate + (1.0 - alpha) * tracker->smoothed_rate;
+    }
+    
+    // Update tracking variables
+    tracker->tests_at_last_update = completed_tests;
     tracker->last_update = current_time;
 }
 
@@ -51,12 +72,12 @@ void finish_progress(progress_tracker_t* tracker) {
     }
 }
 
-// Calculate ETA in seconds
+// Calculate ETA in seconds using smoothed rate
 double calculate_eta_seconds(const progress_tracker_t* tracker) {
-    if (!tracker || tracker->avg_tests_per_second <= 0) return -1;
+    if (!tracker || tracker->smoothed_rate <= 0) return -1;
     
     uint64_t remaining_tests = tracker->total_combinations - tracker->completed_tests;
-    return (double)remaining_tests / tracker->avg_tests_per_second;
+    return (double)remaining_tests / tracker->smoothed_rate;
 }
 
 // Calculate elapsed time in seconds
@@ -157,7 +178,7 @@ void display_detailed_progress(const progress_tracker_t* tracker, const char* cu
     
     format_large_number(tracker->completed_tests, completed_str, sizeof(completed_str));
     format_large_number(tracker->total_combinations, total_str, sizeof(total_str));
-    format_large_number((uint64_t)tracker->avg_tests_per_second, rate_str, sizeof(rate_str));
+    format_large_number((uint64_t)tracker->smoothed_rate, rate_str, sizeof(rate_str));
     
     double elapsed = calculate_elapsed_seconds(tracker);
     format_duration(elapsed, elapsed_str, sizeof(elapsed_str));
@@ -170,18 +191,49 @@ void display_detailed_progress(const progress_tracker_t* tracker, const char* cu
         percentage = (double)tracker->completed_tests / tracker->total_combinations * 100.0;
     }
     
-    printf("\r" COLOR_CYAN "Progress: " COLOR_RESET "%s/%s (%.1f%%) | " 
-           COLOR_YELLOW "Rate: " COLOR_RESET "%s tests/sec | "
-           COLOR_BLUE "Elapsed: " COLOR_RESET "%s | "
-           COLOR_GREEN "ETA: " COLOR_RESET "%s | "
-           COLOR_BOLD "Solutions: %d" COLOR_RESET,
-           completed_str, total_str, percentage,
-           rate_str, elapsed_str, eta_str, tracker->solutions_found);
+    // Build the progress line with padding to ensure clean overwrites
+    char progress_line[256];
+    int written = snprintf(progress_line, sizeof(progress_line),
+                          COLOR_CYAN "Progress: " COLOR_RESET "%s/%s (%.1f%%) | " 
+                          COLOR_YELLOW "Rate: " COLOR_RESET "%s tests/sec | "
+                          COLOR_BLUE "Elapsed: " COLOR_RESET "%s | "
+                          COLOR_GREEN "ETA: " COLOR_RESET "%s | "
+                          COLOR_BOLD "Solutions: %d" COLOR_RESET,
+                          completed_str, total_str, percentage,
+                          rate_str, elapsed_str, eta_str, tracker->solutions_found);
     
-    if (current_operation) {
-        printf(" | %s", current_operation);
+    if (current_operation && written < (int)sizeof(progress_line) - 10) {
+        written += snprintf(progress_line + written, sizeof(progress_line) - written, " | %s", current_operation);
     }
     
+    // Pad with spaces to ensure we overwrite any previous longer text (120 chars total)
+    while (written < 120 && written < (int)sizeof(progress_line) - 1) {
+        progress_line[written++] = ' ';
+    }
+    progress_line[written] = '\0';
+    
+    // Use ANSI escape to move up one line if this isn't the first update
+    static bool first_update = true;
+    if (!first_update) {
+        printf("\033[A"); // Move cursor up one line
+    }
+    first_update = false;
+    
+    printf("\r%s\n", progress_line);
+    // Print a blank second line for the cursor to rest on
+    for (int i = 0; i < 80; i++) printf(" ");
+    printf("\r");
+    fflush(stdout);
+}
+
+// Clear the current progress line
+void clear_progress_line(void) {
+    printf("\033[A"); // Move up to progress line
+    printf("\r");
+    for (int i = 0; i < 120; i++) printf(" ");
+    printf("\n\r");
+    for (int i = 0; i < 80; i++) printf(" ");
+    printf("\r");
     fflush(stdout);
 }
 
