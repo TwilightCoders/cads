@@ -1,27 +1,27 @@
 #include "basic_ops.h"
 
 // Basic arithmetic and logical operations
-uint8_t basic_add(uint8_t a, uint8_t b, uint8_t constant) {
-    return (a + b) & 0xFF;
+uint64_t basic_add(uint64_t a, uint64_t b, uint64_t constant) {
+    return a + b;
 }
 
-uint8_t basic_sub(uint8_t a, uint8_t b, uint8_t constant) {
-    return (a - b) & 0xFF;
+uint64_t basic_sub(uint64_t a, uint64_t b, uint64_t constant) {
+    return a - b;
 }
 
-uint8_t basic_xor(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t basic_xor(uint64_t a, uint64_t b, uint64_t constant) {
     return a ^ b;
 }
 
-uint8_t basic_and(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t basic_and(uint64_t a, uint64_t b, uint64_t constant) {
     return a & b;
 }
 
-uint8_t basic_or(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t basic_or(uint64_t a, uint64_t b, uint64_t constant) {
     return a | b;
 }
 
-uint8_t basic_identity(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t basic_identity(uint64_t a, uint64_t b, uint64_t constant) {
     return a;
 }
 

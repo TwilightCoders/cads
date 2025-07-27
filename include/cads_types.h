@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include <stddef.h>
 
 // Configuration limits and defaults
 #define CADS_MAX_PACKET_SIZE 1024     // Maximum supported packet size
