@@ -24,8 +24,8 @@ bool test_operation_sequence(const packet_dataset_t* dataset,
     if (current_depth >= max_depth) {
         (*tests_performed)++;
         
-        // Update progress bar periodically
-        if (tracker && *tests_performed % config->progress_interval == 0) {
+        // Update progress bar periodically (time-based)
+        if (tracker && should_display_progress(tracker)) {
             update_progress(tracker, *tests_performed, results->solution_count);
             display_detailed_progress(tracker, "Testing");
         }
@@ -217,7 +217,7 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
         }
         
         uint64_t estimated_tests = permutations * operation_sequences * config->max_constants;
-        init_progress_tracker(tracker, estimated_tests, config->progress_interval);
+        init_progress_tracker(tracker, estimated_tests, config->progress_interval_ms);
     }
     
     uint64_t tests_performed = 0;
@@ -271,8 +271,8 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
                         }
                     }
                     
-                    // Update progress occasionally  
-                    if (tracker && tests_performed % config->progress_interval == 0) {
+                    // Update progress occasionally (time-based)
+                    if (tracker && should_display_progress(tracker)) {
                         update_progress(tracker, tests_performed, results->solution_count);
                         display_detailed_progress(tracker, "Recursive");
                     }

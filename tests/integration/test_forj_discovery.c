@@ -31,7 +31,7 @@ void test_forj_algorithm_discovery(void) {
         .verbose = false,       
         .early_exit = true,     // Stop at first solution
         .max_solutions = 1,     
-        .progress_interval = 1000000   // More frequent updates
+        .progress_interval_ms = 250
     };
     
     // Create search results
@@ -90,7 +90,7 @@ void test_forj_discovery_with_custom_operations(void) {
         .verbose = false,
         .early_exit = true,
         .max_solutions = 1,
-        .progress_interval = 500000,
+        .progress_interval_ms = 250,
         .use_custom_operations = true,
         .custom_operations = forj_operations,
         .custom_operation_count = sizeof(forj_operations) / sizeof(forj_operations[0])

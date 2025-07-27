@@ -34,7 +34,7 @@ void test_custom_operation_selection(void) {
         .verbose = false,
         .early_exit = true,
         .max_solutions = 1,
-        .progress_interval = 10000,  // Shorter interval to see progress bar
+        .progress_interval_ms = 250,
         .custom_operations = forj_operations,
         .custom_operation_count = 5,
         .use_custom_operations = true
@@ -77,7 +77,7 @@ void test_standard_complexity_search(void) {
         .verbose = false,
         .early_exit = true,
         .max_solutions = 1,
-        .progress_interval = 100000,
+        .progress_interval_ms = 250,
         .use_custom_operations = false   // Use standard complexity
     };
     

@@ -4,7 +4,7 @@
 #include "../../include/cads_types.h"
 
 // Progress display functions
-void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinations, int interval_sec);
+void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinations, int interval_ms);
 void update_progress(progress_tracker_t* tracker, uint64_t completed_tests, int solutions_found);
 void finish_progress(progress_tracker_t* tracker);
 
@@ -18,6 +18,7 @@ void display_progress_bar(const progress_tracker_t* tracker);
 void display_detailed_progress(const progress_tracker_t* tracker, const char* current_operation);
 void display_final_summary(const progress_tracker_t* tracker);
 void clear_progress_line(void);
+bool should_display_progress(progress_tracker_t* tracker);
 
 // Time formatting utilities
 void format_duration(double seconds, char* buffer, size_t buffer_size);

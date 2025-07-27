@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/time.h>
 #include <stddef.h>
 
 // Configuration limits and defaults
@@ -66,10 +67,11 @@ typedef struct {
     uint64_t tests_at_last_update;
     double avg_tests_per_second;
     double smoothed_rate;               // Exponential moving average of rate
-    time_t start_time;
-    time_t last_update;
+    struct timeval start_time;
+    struct timeval last_update;
+    struct timeval last_progress_display;       // Last time progress was displayed
     int solutions_found;
-    int progress_interval_sec;
+    int progress_interval_ms;           // Progress update interval in milliseconds
 } progress_tracker_t;
 
 // Search configuration
@@ -83,7 +85,7 @@ typedef struct {
     int max_solutions;                 // Maximum solutions to find (0 = unlimited)
     const char* output_file;
     const char* resume_file;
-    int progress_interval;
+    int progress_interval_ms;
     const char* input_file;            // Input file with test packets
     
     // Custom operation selection (for targeted testing)

@@ -1,11 +1,12 @@
 #include "progress_tracker.h"
 #include <stdio.h>
 #include <time.h>
+#include <sys/time.h>
 #include <string.h>
 #include <math.h>
 
 // Initialize progress tracker
-void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinations, int interval_sec) {
+void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinations, int interval_ms) {
     if (!tracker) return;
     
     tracker->total_combinations = total_combinations;
@@ -13,22 +14,27 @@ void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinati
     tracker->tests_at_last_update = 0;
     tracker->avg_tests_per_second = 0.0;
     tracker->smoothed_rate = 0.0;
-    tracker->start_time = time(NULL);
+    gettimeofday(&tracker->start_time, NULL);
     tracker->last_update = tracker->start_time;
+    tracker->last_progress_display = tracker->start_time;
     tracker->solutions_found = 0;
-    tracker->progress_interval_sec = interval_sec;
+    tracker->progress_interval_ms = interval_ms;
 }
 
 // Update progress tracking
 void update_progress(progress_tracker_t* tracker, uint64_t completed_tests, int solutions_found) {
     if (!tracker) return;
     
-    time_t current_time = time(NULL);
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
     tracker->completed_tests = completed_tests;
     tracker->solutions_found = solutions_found;
     
+    // Calculate time since last update in seconds (with microsecond precision)
+    double time_since_last = (current_time.tv_sec - tracker->last_update.tv_sec) + 
+                            (current_time.tv_usec - tracker->last_update.tv_usec) / 1000000.0;
+    
     // Calculate instantaneous rate since last update
-    double time_since_last = difftime(current_time, tracker->last_update);
     double instantaneous_rate = 0.0;
     if (time_since_last > 0) {
         uint64_t tests_since_last = completed_tests - tracker->tests_at_last_update;
@@ -36,7 +42,8 @@ void update_progress(progress_tracker_t* tracker, uint64_t completed_tests, int 
     }
     
     // Calculate overall average rate
-    double elapsed = difftime(current_time, tracker->start_time);
+    double elapsed = (current_time.tv_sec - tracker->start_time.tv_sec) + 
+                    (current_time.tv_usec - tracker->start_time.tv_usec) / 1000000.0;
     if (elapsed > 0) {
         tracker->avg_tests_per_second = (double)completed_tests / elapsed;
     }
@@ -61,12 +68,14 @@ void update_progress(progress_tracker_t* tracker, uint64_t completed_tests, int 
 void finish_progress(progress_tracker_t* tracker) {
     if (!tracker) return;
     
-    time_t end_time = time(NULL);
+    struct timeval end_time;
+    gettimeofday(&end_time, NULL);
     tracker->completed_tests = tracker->total_combinations;
     tracker->last_update = end_time;
     
     // Final calculation
-    double elapsed = difftime(end_time, tracker->start_time);
+    double elapsed = (end_time.tv_sec - tracker->start_time.tv_sec) + 
+                    (end_time.tv_usec - tracker->start_time.tv_usec) / 1000000.0;
     if (elapsed > 0) {
         tracker->avg_tests_per_second = (double)tracker->total_combinations / elapsed;
     }
@@ -83,7 +92,8 @@ double calculate_eta_seconds(const progress_tracker_t* tracker) {
 // Calculate elapsed time in seconds
 double calculate_elapsed_seconds(const progress_tracker_t* tracker) {
     if (!tracker) return 0;
-    return difftime(tracker->last_update, tracker->start_time);
+    return (tracker->last_update.tv_sec - tracker->start_time.tv_sec) + 
+           (tracker->last_update.tv_usec - tracker->start_time.tv_usec) / 1000000.0;
 }
 
 // Calculate current tests per second
@@ -185,7 +195,17 @@ void display_detailed_progress(const progress_tracker_t* tracker, const char* cu
     
     format_large_number(tracker->completed_tests, completed_str, sizeof(completed_str));
     format_large_number(tracker->total_combinations, total_str, sizeof(total_str));
-    format_large_number((uint64_t)tracker->smoothed_rate, rate_str, sizeof(rate_str));
+    
+    // Format rate as floating point with appropriate units
+    if (tracker->smoothed_rate >= 1000000000.0) {
+        snprintf(rate_str, sizeof(rate_str), "%.1fB", tracker->smoothed_rate / 1000000000.0);
+    } else if (tracker->smoothed_rate >= 1000000.0) {
+        snprintf(rate_str, sizeof(rate_str), "%.1fM", tracker->smoothed_rate / 1000000.0);
+    } else if (tracker->smoothed_rate >= 1000.0) {
+        snprintf(rate_str, sizeof(rate_str), "%.1fK", tracker->smoothed_rate / 1000.0);
+    } else {
+        snprintf(rate_str, sizeof(rate_str), "%.1f", tracker->smoothed_rate);
+    }
     
     double elapsed = calculate_elapsed_seconds(tracker);
     format_duration(elapsed, elapsed_str, sizeof(elapsed_str));
@@ -242,6 +262,25 @@ void clear_progress_line(void) {
     for (int i = 0; i < 80; i++) printf(" ");
     printf("\r");
     fflush(stdout);
+}
+
+// Check if enough time has passed to display progress update
+bool should_display_progress(progress_tracker_t* tracker) {
+    if (!tracker) return false;
+    
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+    
+    // Calculate milliseconds since last progress display
+    long time_diff_ms = (current_time.tv_sec - tracker->last_progress_display.tv_sec) * 1000 + 
+                       (current_time.tv_usec - tracker->last_progress_display.tv_usec) / 1000;
+    
+    if (time_diff_ms >= tracker->progress_interval_ms) {
+        tracker->last_progress_display = current_time;
+        return true;
+    }
+    
+    return false;
 }
 
 // Display final summary

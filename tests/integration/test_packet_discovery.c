@@ -59,7 +59,7 @@ void test_mxt275_algorithm_discovery(void) {
         .verbose = false,       
         .early_exit = true,     // Stop at first solution
         .max_solutions = 1,     
-        .progress_interval = 100000  // Reduced to match working test
+        .progress_interval_ms = 250
     };
     
     // Create search results
@@ -125,7 +125,7 @@ void test_targeted_mxt275_discovery(void) {
         .verbose = false,
         .early_exit = true,
         .max_solutions = 1,
-        .progress_interval = 100000,  // Reduced to match working test
+        .progress_interval_ms = 250,
         .use_custom_operations = true,
         .custom_operations = mxt275_operations,
         .custom_operation_count = sizeof(mxt275_operations) / sizeof(mxt275_operations[0])
@@ -219,7 +219,7 @@ void test_dataset_comparison(void) {
         .verbose = false,
         .early_exit = true,
         .max_solutions = 1,
-        .progress_interval = 100000,  // Reduced from 500000 to match working test
+        .progress_interval_ms = 250,
         .use_custom_operations = true,
         .custom_operations = (operation_t[]){OP_IDENTITY, OP_ADD, OP_ONES_COMPLEMENT, OP_CONST_ADD, OP_XOR},
         .custom_operation_count = 5
