@@ -41,41 +41,48 @@ const uint8_t sample_lookup_table[256] = {
 };
 
 // Utility functions
-uint8_t rotate_left(uint8_t value, uint8_t positions) {
-    positions &= 0x7; // Limit to 0-7
-    return ((value << positions) | (value >> (8 - positions))) & 0xFF;
+uint64_t rotate_left(uint64_t value, uint8_t positions, uint8_t bit_width) {
+    if (bit_width == 0 || bit_width > 64) bit_width = 64;
+    positions %= bit_width; // Wrap positions
+    uint64_t mask = (1ULL << bit_width) - 1;
+    value &= mask;
+    return ((value << positions) | (value >> (bit_width - positions))) & mask;
 }
 
-uint8_t rotate_right(uint8_t value, uint8_t positions) {
-    positions &= 0x7; // Limit to 0-7
-    return ((value >> positions) | (value << (8 - positions))) & 0xFF;
+uint64_t rotate_right(uint64_t value, uint8_t positions, uint8_t bit_width) {
+    if (bit_width == 0 || bit_width > 64) bit_width = 64;
+    positions %= bit_width; // Wrap positions
+    uint64_t mask = (1ULL << bit_width) - 1;
+    value &= mask;
+    return ((value >> positions) | (value << (bit_width - positions))) & mask;
 }
 
-uint8_t reverse_bits(uint8_t value) {
-    uint8_t result = 0;
-    for (int i = 0; i < 8; i++) {
+uint64_t reverse_bits(uint64_t value, uint8_t bit_width) {
+    if (bit_width == 0 || bit_width > 64) bit_width = 64;
+    uint64_t result = 0;
+    for (int i = 0; i < bit_width; i++) {
         result = (result << 1) | ((value >> i) & 1);
     }
     return result;
 }
 
 // Advanced algorithm implementations
-uint8_t advanced_rotleft(uint8_t a, uint8_t b, uint8_t constant) {
-    return rotate_left(a, b & 0x7);
+uint64_t advanced_rotleft(uint64_t a, uint64_t b, uint64_t constant) {
+    return rotate_left(a, b & 0x3F, 8); // Default to 8-bit for compatibility
 }
 
-uint8_t advanced_rotright(uint8_t a, uint8_t b, uint8_t constant) {
-    return rotate_right(a, b & 0x7);
+uint64_t advanced_rotright(uint64_t a, uint64_t b, uint64_t constant) {
+    return rotate_right(a, b & 0x3F, 8); // Default to 8-bit for compatibility
 }
 
-uint8_t advanced_crc8_ccitt(uint8_t a, uint8_t b, uint8_t constant) {
-    return crc8_ccitt_table[a ^ b];
+uint64_t advanced_crc8_ccitt(uint64_t a, uint64_t b, uint64_t constant) {
+    return crc8_ccitt_table[(a ^ b) & 0xFF];
 }
 
-uint8_t advanced_crc8_dallas(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t advanced_crc8_dallas(uint64_t a, uint64_t b, uint64_t constant) {
     // Dallas/Maxim 1-Wire CRC-8 (different polynomial)
     uint8_t crc = 0;
-    uint8_t data = a ^ b;
+    uint8_t data = (a ^ b) & 0xFF;
     for (int i = 0; i < 8; i++) {
         if ((crc ^ data) & 0x01) {
             crc = ((crc ^ 0x18) >> 1) | 0x80;
@@ -87,10 +94,10 @@ uint8_t advanced_crc8_dallas(uint8_t a, uint8_t b, uint8_t constant) {
     return crc;
 }
 
-uint8_t advanced_crc8_sae(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t advanced_crc8_sae(uint64_t a, uint64_t b, uint64_t constant) {
     // SAE J1850 CRC-8
     uint8_t crc = 0xFF;
-    uint8_t data = a ^ b;
+    uint8_t data = (a ^ b) & 0xFF;
     crc ^= data;
     for (int i = 0; i < 8; i++) {
         if (crc & 0x80) {
@@ -102,33 +109,33 @@ uint8_t advanced_crc8_sae(uint8_t a, uint8_t b, uint8_t constant) {
     return crc;
 }
 
-uint8_t advanced_fletcher8(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t advanced_fletcher8(uint64_t a, uint64_t b, uint64_t constant) {
     // Fletcher-8 checksum variant
-    uint8_t sum1 = a, sum2 = b;
-    sum1 = (sum1 + b) & 0xFF;
+    uint8_t sum1 = a & 0xFF, sum2 = b & 0xFF;
+    sum1 = (sum1 + sum2) & 0xFF;
     sum2 = (sum2 + sum1) & 0xFF;
     return sum2;
 }
 
-uint8_t advanced_swap_nibbles(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t advanced_swap_nibbles(uint64_t a, uint64_t b, uint64_t constant) {
     return ((a & 0x0F) << 4) | ((a & 0xF0) >> 4);
 }
 
-uint8_t advanced_reverse_bits(uint8_t a, uint8_t b, uint8_t constant) {
-    return reverse_bits(a);
+uint64_t advanced_reverse_bits(uint64_t a, uint64_t b, uint64_t constant) {
+    return reverse_bits(a, 8); // Default to 8-bit
 }
 
-uint8_t advanced_lookup_table(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t advanced_lookup_table(uint64_t a, uint64_t b, uint64_t constant) {
     return sample_lookup_table[a & 0xFF];
 }
 
-uint8_t advanced_poly_crc(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t advanced_poly_crc(uint64_t a, uint64_t b, uint64_t constant) {
     // Generic polynomial CRC with constant as polynomial
-    uint8_t crc = a;
-    uint8_t data = b;
+    uint8_t crc = a & 0xFF;
+    uint8_t data = b & 0xFF;
     for (int i = 0; i < 8; i++) {
         if ((crc ^ data) & 0x01) {
-            crc = (crc >> 1) ^ constant;
+            crc = (crc >> 1) ^ (constant & 0xFF);
         } else {
             crc >>= 1;
         }
@@ -137,13 +144,13 @@ uint8_t advanced_poly_crc(uint8_t a, uint8_t b, uint8_t constant) {
     return crc;
 }
 
-uint8_t advanced_checksum_variant(uint8_t a, uint8_t b, uint8_t constant) {
+uint64_t advanced_checksum_variant(uint64_t a, uint64_t b, uint64_t constant) {
     // Custom checksum variant based on constant
     switch (constant & 0x3) {
-        case 0: return (a + b + constant) & 0xFF;
-        case 1: return (a ^ b ^ constant) & 0xFF;
-        case 2: return ((a * b) + constant) & 0xFF;
-        case 3: return ((a << 1) + b + constant) & 0xFF;
+        case 0: return a + b + constant;
+        case 1: return a ^ b ^ constant;
+        case 2: return (a * b) + constant;
+        case 3: return ((a << 1) + b + constant);
     }
     return 0;
 }

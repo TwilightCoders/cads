@@ -4,22 +4,22 @@
 #include "../../include/cads_types.h"
 
 // Advanced algorithm implementations (11 operations)
-uint8_t advanced_rotleft(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_rotright(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_crc8_ccitt(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_crc8_dallas(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_crc8_sae(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_fletcher8(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_swap_nibbles(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_reverse_bits(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_lookup_table(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_poly_crc(uint8_t a, uint8_t b, uint8_t constant);
-uint8_t advanced_checksum_variant(uint8_t a, uint8_t b, uint8_t constant);
+uint64_t advanced_rotleft(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_rotright(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_crc8_ccitt(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_crc8_dallas(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_crc8_sae(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_fletcher8(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_swap_nibbles(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_reverse_bits(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_lookup_table(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_poly_crc(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_checksum_variant(uint64_t a, uint64_t b, uint64_t constant);
 
 // Utility functions
-uint8_t rotate_left(uint8_t value, uint8_t positions);
-uint8_t rotate_right(uint8_t value, uint8_t positions);
-uint8_t reverse_bits(uint8_t value);
+uint64_t rotate_left(uint64_t value, uint8_t positions, uint8_t bit_width);
+uint64_t rotate_right(uint64_t value, uint8_t positions, uint8_t bit_width);
+uint64_t reverse_bits(uint64_t value, uint8_t bit_width);
 
 // Registry function for advanced algorithms
 const algorithm_info_t* get_advanced_algorithms(int* count);
