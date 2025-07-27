@@ -26,7 +26,7 @@ UNITY_SOURCES = $(TEST_DIR)/unity.c
 
 # Test executables (with build directory)
 UNIT_TESTS = $(BUILD_DIR)/test_algorithm_operations $(BUILD_DIR)/test_packet_data $(BUILD_DIR)/test_field_combiner
-INTEGRATION_TESTS = $(BUILD_DIR)/test_forj_algorithm $(BUILD_DIR)/test_search_engine $(BUILD_DIR)/test_packet_discovery $(BUILD_DIR)/test_performance_profile $(BUILD_DIR)/test_rate_calculation
+INTEGRATION_TESTS = $(BUILD_DIR)/test_forj_algorithm $(BUILD_DIR)/test_search_engine $(BUILD_DIR)/test_packet_discovery $(BUILD_DIR)/test_performance_profile $(BUILD_DIR)/test_rate_calculation $(BUILD_DIR)/benchmark_core
 
 ALL_TESTS = $(UNIT_TESTS) $(INTEGRATION_TESTS)
 
@@ -61,6 +61,9 @@ $(BUILD_DIR)/test_performance_profile: $(INTEGRATION_DIR)/profile_test.c $(UNITY
 	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
 
 $(BUILD_DIR)/test_rate_calculation: $(INTEGRATION_DIR)/test_rate.c $(UNITY_SOURCES) $(CORE_SOURCES) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
+
+$(BUILD_DIR)/benchmark_core: $(INTEGRATION_DIR)/benchmark_core.c $(UNITY_SOURCES) $(CORE_SOURCES) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
 
 # Run all tests
