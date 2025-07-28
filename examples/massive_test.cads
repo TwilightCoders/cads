@@ -1,0 +1,15 @@
+# CADS Configuration File - Massive Scale Test
+[config]
+name = "Massive Scale Test"
+description = "Gigantic search space to test month/year emojis"
+complexity = advanced
+max_fields = 8
+max_constants = 256
+early_exit = false
+max_solutions = 1
+progress_interval = 5000
+use_threading = false
+
+[packets]
+{"packet": "deadbeefcafebabe1234567890abcdef", "checksum": "42", "description": "Test1"}
+{"packet": "deadbeefcafebabe1234567890fedcba", "checksum": "37", "description": "Test2"}

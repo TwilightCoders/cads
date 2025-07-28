@@ -5,6 +5,7 @@
 #include "cads_config_loader.h"
 #include "../src/core/packet_data.h"
 #include "../src/core/progress_tracker.h"
+#include "../src/utils/hardware_benchmark.h"
 
 // Search results management
 search_results_t* create_search_results(size_t initial_capacity);

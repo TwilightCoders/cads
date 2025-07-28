@@ -3,6 +3,9 @@
 #include <string.h>
 #include "../../include/checksum_engine.h"
 #include "../../include/cads_config_loader.h"
+#include "../../include/algorithm_registry.h"
+#include "../utils/search_display.h"
+#include "../utils/hardware_benchmark.h"
 
 void print_usage(const char* program_name) {
     printf("CADS - Checksum Algorithm Discovery System v1-beta\n");
@@ -91,6 +94,14 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "❌ Error: Failed to create search results\n");
         free_cads_config(config);
         return 1;
+    }
+    
+    // Run hardware benchmark only if we need to display search estimation
+    hardware_benchmark_result_t benchmark = {0};
+    bool need_estimation = config->verbose; // Only run benchmark if verbose mode is on
+    
+    if (need_estimation) {
+        benchmark = run_hardware_benchmark();
     }
     
     progress_tracker_t tracker;

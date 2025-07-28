@@ -1,0 +1,18 @@
+# CADS Configuration File - Emoji Scale Test
+# Designed to demonstrate the full range of complexity emojis
+
+[config]
+name = "Emoji Scale Test"
+description = "Massive search space to test emoji complexity indicators"
+complexity = advanced
+max_fields = 6
+max_constants = 256
+early_exit = false
+max_solutions = 1
+progress_interval = 250
+use_threading = false
+
+[packets]
+# Simple test data - real algorithm doesn't matter for emoji demonstration
+{"packet": "deadbeef12345678", "checksum": "42", "description": "Test1"}
+{"packet": "deadbeef87654321", "checksum": "37", "description": "Test2"}

@@ -38,11 +38,12 @@ int main() {
         OP_ONES_COMPLEMENT, OP_CONST_ADD  // These shouldn't produce trivial solutions
     };
     
-    cads_config_file_t config = create_custom_operation_config(forj_operations, 3);
-    config.max_fields = 4;         // Increase for longer test
-    config.max_constants = 64;     // Increase for longer test
-    enable_early_exit(&config, 1);
-    set_progress_interval(&config, 250);
+    cads_config_file_t config = create_custom_operation_config(performance_operations, 2);
+    config.max_fields = 6;         // Larger search space for profiling
+    config.max_constants = 64;     // Reasonable constant range
+    config.dataset = dataset;
+    disable_early_exit(&config);   // Test full performance without early termination
+    set_progress_interval(&config, 1000);  // Less frequent updates for cleaner profiling
     
     search_results_t* results = create_search_results(10);
     progress_tracker_t tracker;
