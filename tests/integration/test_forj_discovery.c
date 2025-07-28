@@ -24,9 +24,10 @@ void test_forj_algorithm_discovery(void) {
     TEST_ASSERT(load_success);
     
     // Create focused search configuration for Forj algorithm discovery
-    search_config_t config = create_default_search_config();  // Uses INTERMEDIATE complexity
+    cads_config_file_t config = create_default_search_config();  // Uses INTERMEDIATE complexity
     config.max_fields = 4;        // Reduced for faster testing (still finds Forj algorithm)
     config.max_constants = 32;    // Reduced search space - focuses on smaller constants
+    config.dataset = dataset;
     enable_early_exit(&config, 1);
     set_progress_interval(&config, 250);
     
@@ -38,7 +39,7 @@ void test_forj_algorithm_discovery(void) {
     progress_tracker_t tracker = {0};
     
     // Execute search - this should discover the Forj algorithm
-    bool search_success = execute_checksum_search(dataset, &config, results, &tracker);
+    bool search_success = execute_checksum_search(&config, results, &tracker);
     TEST_ASSERT(search_success);
     
     // Verify we found at least one solution
@@ -78,10 +79,11 @@ void test_forj_discovery_with_custom_operations(void) {
         OP_IDENTITY
     };
     
-    search_config_t config = create_custom_operation_config(forj_operations, 
+    cads_config_file_t config = create_custom_operation_config(forj_operations, 
                                                            sizeof(forj_operations) / sizeof(forj_operations[0]));
     config.max_fields = 4;        // Reduced for faster testing
     config.max_constants = 16;    // Much smaller search space with custom operations
+    config.dataset = dataset;
     
     // Create search results
     search_results_t* results = create_search_results(10);
@@ -91,7 +93,7 @@ void test_forj_discovery_with_custom_operations(void) {
     progress_tracker_t tracker = {0};
     
     // Execute search with custom operations
-    bool search_success = execute_checksum_search(dataset, &config, results, &tracker);
+    bool search_success = execute_checksum_search(&config, results, &tracker);
     TEST_ASSERT(search_success);
     
     // Should find solution faster with focused operation set

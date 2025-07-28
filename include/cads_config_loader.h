@@ -10,6 +10,7 @@ typedef struct {
     complexity_level_t complexity;
     int max_fields;
     int max_constants;
+    size_t checksum_size;
     bool early_exit;
     int max_solutions;
     int progress_interval;
@@ -26,7 +27,6 @@ cads_config_file_t* create_cads_config_from_cli(int argc, char* argv[]);
 void free_cads_config(cads_config_file_t* config);
 
 // Configuration utilities
-search_config_t create_search_config_from_cads(const cads_config_file_t* cads_config);
 void merge_cli_args_into_cads_config(cads_config_file_t* config, int argc, char* argv[]);
 bool load_packets_into_cads_config(cads_config_file_t* config, const char* json_file);
 

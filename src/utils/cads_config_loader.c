@@ -335,28 +335,3 @@ bool load_packets_into_cads_config(cads_config_file_t* config, const char* json_
     return load_packets_from_json(config->dataset, json_file);
 }
 
-search_config_t create_search_config_from_cads(const cads_config_file_t* cads_config) {
-    search_config_t config;
-    
-    if (cads_config->custom_operation_count > 0) {
-        config = create_custom_operation_config(cads_config->custom_operations, 
-                                               cads_config->custom_operation_count);
-    } else {
-        config = create_default_search_config();
-    }
-    
-    config.complexity = cads_config->complexity;
-    config.max_fields = cads_config->max_fields;
-    config.max_constants = cads_config->max_constants;
-    config.verbose = cads_config->verbose;
-    
-    if (cads_config->early_exit) {
-        enable_early_exit(&config, cads_config->max_solutions > 0 ? cads_config->max_solutions : 1);
-    } else if (cads_config->max_solutions > 0) {
-        config.max_solutions = cads_config->max_solutions;
-    }
-    
-    set_progress_interval(&config, cads_config->progress_interval);
-    
-    return config;
-}

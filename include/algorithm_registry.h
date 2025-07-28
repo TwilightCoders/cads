@@ -2,6 +2,7 @@
 #define ALGORITHM_REGISTRY_H
 
 #include "cads_types.h"
+#include "cads_config_loader.h"
 
 // Algorithm function pointer type for unified interface
 typedef uint64_t (*algorithm_func_t)(uint64_t a, uint64_t b, uint64_t constant);
@@ -30,8 +31,8 @@ const algorithm_registry_entry_t* get_algorithm_by_operation(operation_t op);
 const char* get_complexity_name(complexity_level_t complexity);
 
 // Performance estimation
-uint64_t estimate_total_combinations(const search_config_t* config, size_t packet_count);
-double estimate_completion_time(const search_config_t* config, size_t packet_count);
+uint64_t estimate_total_combinations(const cads_config_file_t* config, size_t packet_count);
+double estimate_completion_time(const cads_config_file_t* config, size_t packet_count);
 
 // Algorithm execution wrapper
 uint64_t execute_algorithm(operation_t op, uint64_t a, uint64_t b, uint64_t constant);

@@ -52,8 +52,9 @@ void test_mxt275_algorithm_discovery(void) {
     TEST_ASSERT(success);
     
     // Create focused search configuration (using working parameters)
-    search_config_t config = create_default_search_config();
+    cads_config_file_t config = create_default_search_config();
     config.max_fields = 5;
+    config.dataset = dataset;
     enable_early_exit(&config, 1);
     set_progress_interval(&config, 250);
     
@@ -65,7 +66,7 @@ void test_mxt275_algorithm_discovery(void) {
     progress_tracker_t tracker = {0};
     
     // Execute search - should discover the MXT275 algorithm
-    bool search_success = execute_checksum_search(dataset, &config, results, &tracker);
+    bool search_success = execute_checksum_search(&config, results, &tracker);
     TEST_ASSERT(search_success);
     
     // Verify we found at least one solution
@@ -112,9 +113,10 @@ void test_targeted_mxt275_discovery(void) {
         OP_IDENTITY
     };
     
-    search_config_t config = create_custom_operation_config(mxt275_operations, 
+    cads_config_file_t config = create_custom_operation_config(mxt275_operations, 
                                                            sizeof(mxt275_operations) / sizeof(mxt275_operations[0]));
     config.max_fields = 5;
+    config.dataset = dataset;
     
     // Create search results
     search_results_t* results = create_search_results(10);
@@ -124,7 +126,7 @@ void test_targeted_mxt275_discovery(void) {
     progress_tracker_t tracker = {0};
     
     // Execute targeted search
-    bool search_success = execute_checksum_search(dataset, &config, results, &tracker);
+    bool search_success = execute_checksum_search(&config, results, &tracker);
     TEST_ASSERT(search_success);
     
     // Should find solution faster with targeted operation set
@@ -197,23 +199,27 @@ void test_dataset_comparison(void) {
     
     // Test search with GMRS dataset first (should succeed)
     operation_t comparison_ops[] = {OP_IDENTITY, OP_ADD, OP_ONES_COMPLEMENT, OP_CONST_ADD, OP_XOR};
-    search_config_t config = create_custom_operation_config(comparison_ops, 5);
-    config.max_fields = 5;
+    cads_config_file_t gmrs_config = create_custom_operation_config(comparison_ops, 5);
+    gmrs_config.max_fields = 5;
+    gmrs_config.dataset = gmrs_dataset;
     
     search_results_t* gmrs_results = create_search_results(10);
     progress_tracker_t tracker1 = {0};
     
     printf("🎯 Testing search with GMRS dataset...\n");
-    gmrs_success = execute_checksum_search(gmrs_dataset, &config, gmrs_results, &tracker1);
+    gmrs_success = execute_checksum_search(&gmrs_config, gmrs_results, &tracker1);
     printf("📈 GMRS search result: %s, solutions found: %zu\n", 
            gmrs_success ? "SUCCESS" : "FAILED", gmrs_results->solution_count);
     
     // Test search with JSON dataset  
+    cads_config_file_t json_config = create_custom_operation_config(comparison_ops, 5);
+    json_config.max_fields = 5;
+    json_config.dataset = json_dataset;
     search_results_t* json_results = create_search_results(10);
     progress_tracker_t tracker2 = {0};
     
     printf("🎯 Testing search with JSON dataset...\n");
-    bool json_success = execute_checksum_search(json_dataset, &config, json_results, &tracker2);
+    bool json_success = execute_checksum_search(&json_config, json_results, &tracker2);
     printf("📈 JSON search result: %s, solutions found: %zu\n", 
            json_success ? "SUCCESS" : "FAILED", json_results->solution_count);
     

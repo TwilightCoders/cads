@@ -33,12 +33,12 @@ int main() {
     
     printf("📦 Dataset loaded: %zu packets\n", dataset->count);
     
-    // Configure for a smaller search to profile
-    operation_t forj_operations[] = {
-        OP_IDENTITY, OP_ADD, OP_XOR
+    // Configure for a pure performance test (no solutions expected)
+    operation_t performance_operations[] = {
+        OP_ONES_COMPLEMENT, OP_CONST_ADD  // These shouldn't produce trivial solutions
     };
     
-    search_config_t config = create_custom_operation_config(forj_operations, 3);
+    cads_config_file_t config = create_custom_operation_config(forj_operations, 3);
     config.max_fields = 4;         // Increase for longer test
     config.max_constants = 64;     // Increase for longer test
     enable_early_exit(&config, 1);
@@ -50,7 +50,7 @@ int main() {
     double start_time = get_time_ms();
     
     printf("🏁 Starting search...\n");
-    bool success = execute_checksum_search(dataset, &config, results, &tracker);
+    bool success = execute_checksum_search(&config, results, &tracker);
     
     double end_time = get_time_ms();
     double elapsed = end_time - start_time;

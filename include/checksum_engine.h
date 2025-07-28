@@ -2,6 +2,7 @@
 #define CHECKSUM_ENGINE_H
 
 #include "cads_types.h"
+#include "cads_config_loader.h"
 #include "../src/core/packet_data.h"
 #include "../src/core/progress_tracker.h"
 
@@ -11,7 +12,7 @@ void free_search_results(search_results_t* results);
 bool add_solution(search_results_t* results, const checksum_solution_t* solution);
 
 // Early exit logic
-bool should_continue_search(const search_results_t* results, const search_config_t* config);
+bool should_continue_search(const search_results_t* results, const cads_config_file_t* config);
 
 // Core checksum field and mask operations
 uint64_t extract_packet_field_value(const uint8_t* packet_data, size_t packet_length,
@@ -29,12 +30,16 @@ bool test_algorithm_combination(const uint8_t* field_indices, uint8_t field_coun
 bool validate_solution(const checksum_solution_t* solution, const packet_dataset_t* dataset);
 
 // Search space estimation
-uint64_t estimate_search_space(const packet_dataset_t* dataset, const search_config_t* config);
+uint64_t estimate_search_space(const packet_dataset_t* dataset, const cads_config_file_t* config);
 
-// Main search function
-bool execute_checksum_search(const packet_dataset_t* dataset, 
-                            const search_config_t* config,
+// Main search functions
+bool execute_checksum_search(const cads_config_file_t* config,
                             search_results_t* results,
                             progress_tracker_t* tracker);
+
+// Threaded search function using unified CADS config
+bool execute_checksum_search_threaded(const cads_config_file_t* config, 
+                                     search_results_t* results,
+                                     const hardware_benchmark_result_t* benchmark);
 
 #endif // CHECKSUM_ENGINE_H

@@ -7,7 +7,7 @@
 
 // Recursive operation testing function
 bool test_operation_sequence(const packet_dataset_t* dataset, 
-                            const search_config_t* config,
+                            const cads_config_file_t* config,
                             const uint8_t* field_permutation,
                             int field_count,
                             const algorithm_registry_entry_t* algorithms,
@@ -132,11 +132,12 @@ bool test_operation_sequence(const packet_dataset_t* dataset,
 }
 
 // Main exhaustive recursive search function
-bool execute_checksum_search(const packet_dataset_t* dataset, 
-                            const search_config_t* config,
+bool execute_checksum_search(const cads_config_file_t* config,
                             search_results_t* results,
                             progress_tracker_t* tracker) {
-    if (!dataset || !config || !results) return false;
+    if (!config || !config->dataset || !results) return false;
+    
+    const packet_dataset_t* dataset = config->dataset;
     
     // Initialize algorithm registry
     if (!initialize_algorithm_registry()) {
@@ -147,7 +148,7 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
     int algorithm_count;
     algorithm_registry_entry_t* algorithms = NULL;
     
-    if (config->use_custom_operations && config->custom_operations && config->custom_operation_count > 0) {
+    if (config->custom_operation_count > 0 && config->custom_operations) {
         // Use custom operations
         algorithm_count = config->custom_operation_count;
         printf("🎯 Using CUSTOM operation set (%d operations)\n", algorithm_count);
@@ -159,7 +160,7 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
             return false;
         }
         printf("📊 Using %s complexity level (%d operations)\n", 
-               get_complexity_name(config->complexity), algorithm_count);
+                get_complexity_name(config->complexity), algorithm_count);
     }
     
     // Allocate and populate operations array
@@ -169,7 +170,7 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
         return false;
     }
     
-    if (config->use_custom_operations && config->custom_operations) {
+    if (config->custom_operation_count > 0 && config->custom_operations) {
         // Populate from custom operations
         for (int i = 0; i < algorithm_count; i++) {
             const algorithm_registry_entry_t* entry = get_algorithm_by_operation(config->custom_operations[i]);
@@ -195,7 +196,7 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
             min_packet_length = dataset->packets[i].packet_length;
         }
     }
-    
+
     printf("🔍 Starting recursive exhaustive checksum analysis...\n");
     printf("Dataset: %zu packets, Min packet length: %zu bytes\n", dataset->count, min_packet_length);
     printf("Complexity: %s, Algorithms: %d\n", get_complexity_name(config->complexity), algorithm_count);
@@ -217,7 +218,7 @@ bool execute_checksum_search(const packet_dataset_t* dataset,
         }
         
         uint64_t estimated_tests = permutations * operation_sequences * config->max_constants;
-        init_progress_tracker(tracker, estimated_tests, config->progress_interval_ms);
+        init_progress_tracker(tracker, estimated_tests, config->progress_interval);
     }
     
     uint64_t tests_performed = 0;
@@ -368,7 +369,7 @@ bool add_solution(search_results_t* results, const checksum_solution_t* solution
     return true;
 }
 
-bool should_continue_search(const search_results_t* results, const search_config_t* config) {
+bool should_continue_search(const search_results_t* results, const cads_config_file_t* config) {
     if (!results || !config) return false;
     
     // Check early exit condition

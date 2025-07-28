@@ -75,25 +75,6 @@ typedef struct {
     int progress_interval_ms;           // Progress update interval in milliseconds
 } progress_tracker_t;
 
-// Search configuration
-typedef struct {
-    complexity_level_t complexity;
-    int max_fields;                    // Maximum number of fields to combine
-    int max_constants;                 // Maximum constant value to test
-    size_t checksum_size;              // Expected checksum size in bytes (1-8)
-    bool verbose;
-    bool early_exit;                   // Exit after finding first solution
-    int max_solutions;                 // Maximum solutions to find (0 = unlimited)
-    const char* output_file;
-    const char* resume_file;
-    int progress_interval_ms;
-    const char* input_file;            // Input file with test packets
-    
-    // Custom operation selection (for targeted testing)
-    operation_t* custom_operations;    // Array of specific operations to test
-    int custom_operation_count;        // Number of operations in custom_operations
-    bool use_custom_operations;        // If true, only test custom_operations instead of complexity level
-} search_config_t;
 
 // Solution result structure
 typedef struct {

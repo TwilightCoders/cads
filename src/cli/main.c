@@ -79,9 +79,6 @@ int main(int argc, char* argv[]) {
     
     printf("✅ Loaded %zu packets successfully\n\n", config->dataset->count);
     
-    // Convert unified config to search config
-    search_config_t search_config = create_search_config_from_cads(config);
-    
     // Create search results and progress tracker
     search_results_t* results = create_search_results(50);
     if (!results) {
@@ -94,7 +91,7 @@ int main(int argc, char* argv[]) {
     
     // Execute checksum search
     printf("🚀 Starting checksum algorithm discovery...\n\n");
-    bool search_success = execute_checksum_search(config->dataset, &search_config, results, &tracker);
+    bool search_success = execute_checksum_search(config->dataset, results, &tracker);
     
     if (!search_success) {
         fprintf(stderr, "❌ Error: Checksum search failed\n");

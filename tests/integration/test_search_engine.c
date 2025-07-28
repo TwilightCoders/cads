@@ -27,8 +27,9 @@ void test_custom_operation_selection(void) {
         OP_IDENTITY, OP_ADD, OP_ONES_COMPLEMENT, OP_CONST_ADD, OP_XOR
     };
     
-    search_config_t config = create_custom_operation_config(forj_operations, 5);
+    cads_config_file_t config = create_custom_operation_config(forj_operations, 5);
     config.max_fields = 5;
+    config.dataset = dataset;
     
     search_results_t* results = create_search_results(10);
     TEST_ASSERT_NOT_NULL(results);
@@ -36,7 +37,7 @@ void test_custom_operation_selection(void) {
     progress_tracker_t tracker;
     
     // Execute search - should find at least one solution quickly
-    bool success = execute_checksum_search(dataset, &config, results, &tracker);
+    bool success = execute_checksum_search(&config, results, &tracker);
     TEST_ASSERT(success);
     TEST_ASSERT(results->solution_count > 0);
     TEST_ASSERT(results->tests_performed > 0);
@@ -59,7 +60,8 @@ void test_standard_complexity_search(void) {
     bool load_success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
     TEST_ASSERT(load_success);
     
-    search_config_t config = create_basic_search_config(3, 10);
+    cads_config_file_t config = create_basic_search_config(3, 10);
+    config.dataset = dataset;
     // Already uses standard complexity by default
     
     search_results_t* results = create_search_results(10);
@@ -68,7 +70,7 @@ void test_standard_complexity_search(void) {
     progress_tracker_t tracker;
     
     // Execute search - should work with basic operations
-    bool success = execute_checksum_search(dataset, &config, results, &tracker);
+    bool success = execute_checksum_search(&config, results, &tracker);
     TEST_ASSERT(success);
     
     // May or may not find solutions with basic ops, but should not crash
@@ -116,7 +118,7 @@ void test_search_results_validation(void) {
 
 // Test early exit conditions
 void test_early_exit_conditions(void) {
-    search_config_t config = create_default_search_config();
+    cads_config_file_t config = create_default_search_config();
     enable_early_exit(&config, 1);
     
     search_results_t results = {0};

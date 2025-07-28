@@ -37,6 +37,6 @@ void print_time_estimate(const cli_args_t* args);
 bool validate_arguments(const cli_args_t* args);
 
 // Convert CLI args to search config
-search_config_t* create_search_config(const cli_args_t* args);
+cads_config_file_t* create_search_config(const cli_args_t* args);
 
 #endif // ARG_PARSER_H
