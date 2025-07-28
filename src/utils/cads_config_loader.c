@@ -264,15 +264,15 @@ config_t* create_cads_config_from_cli(int argc, char* argv[]) {
         {"max-solutions", required_argument, 0, 'm'},
         {"progress-ms", required_argument, 0, 'p'},
         {"verbose", no_argument, 0, 'v'},
-        {"threading", no_argument, 0, 't'},
-        {"threads", required_argument, 0, 'T'},
+        {"threads", required_argument, 0, 't'},
+        {"threading", no_argument, 0, 'T'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     
     int c;
     optind = 1; // Reset getopt
-    while ((c = getopt_long(argc, argv, "i:C:c:f:k:em:p:vtT:h", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "i:C:c:f:k:em:p:vt:Th", long_options, NULL)) != -1) {
         switch (c) {
             case 'i':
                 input_file = optarg;
@@ -303,10 +303,10 @@ config_t* create_cads_config_from_cli(int argc, char* argv[]) {
                 config->verbose = true;
                 break;
             case 't':
-                config->threads = 0; // Auto-detect thread count
+                config->threads = atoi(optarg);
                 break;
             case 'T':
-                config->threads = atoi(optarg);
+                config->threads = 0; // Auto-detect thread count
                 break;
             case 'h':
                 free_cads_config(config);
@@ -317,13 +317,65 @@ config_t* create_cads_config_from_cli(int argc, char* argv[]) {
         }
     }
     
-    // If .cads file specified, load it and override CLI args
+    // If .cads file specified, load it but allow CLI args to override
     if (cads_config_file) {
+        // Store CLI values before loading file
+        int cli_threads = config->threads;
+        bool cli_verbose = config->verbose;
+        complexity_level_t cli_complexity = config->complexity;
+        int cli_max_fields = config->max_fields;
+        int cli_max_constants = config->max_constants;
+        bool cli_early_exit = config->early_exit;
+        int cli_max_solutions = config->max_solutions;
+        int cli_progress_interval = config->progress_interval;
+        
+        // Track which CLI options were explicitly provided
+        bool provided_threads = false;
+        bool provided_verbose = false;
+        bool provided_complexity = false;
+        bool provided_max_fields = false;
+        bool provided_max_constants = false;
+        bool provided_early_exit = false;
+        bool provided_max_solutions = false;
+        bool provided_progress_interval = false;
+        
+        // Re-scan to detect which args were provided
+        optind = 1;
+        int temp_c;
+        while ((temp_c = getopt_long(argc, argv, "i:C:c:f:k:em:p:vt:Th", long_options, NULL)) != -1) {
+            switch (temp_c) {
+                case 'c': provided_complexity = true; break;
+                case 'f': provided_max_fields = true; break;
+                case 'k': provided_max_constants = true; break;
+                case 'e': provided_early_exit = true; break;
+                case 'm': provided_max_solutions = true; break;
+                case 'p': provided_progress_interval = true; break;
+                case 'v': provided_verbose = true; break;
+                case 't': provided_threads = true; break;
+                case 'T': provided_threads = true; break;
+            }
+        }
+        
+        // Load file config
         config_t* file_config = load_cads_config(cads_config_file);
         if (!file_config) {
             free_cads_config(config);
             return NULL;
         }
+        
+        // Apply CLI overrides to file config
+        if (provided_threads) file_config->threads = cli_threads;
+        if (provided_verbose) file_config->verbose = cli_verbose;
+        if (provided_complexity) file_config->complexity = cli_complexity;
+        if (provided_max_fields) file_config->max_fields = cli_max_fields;
+        if (provided_max_constants) file_config->max_constants = cli_max_constants;
+        if (provided_early_exit) {
+            file_config->early_exit = cli_early_exit;
+            file_config->max_solutions = cli_max_solutions; // -e sets max_solutions = 1
+        }
+        if (provided_max_solutions) file_config->max_solutions = cli_max_solutions;
+        if (provided_progress_interval) file_config->progress_interval = cli_progress_interval;
+        
         free_cads_config(config);
         return file_config;
     }
