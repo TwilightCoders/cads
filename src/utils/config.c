@@ -18,7 +18,8 @@ cads_config_file_t create_default_search_config(void) {
         .verbose = false,
         .custom_operations = NULL,
         .custom_operation_count = 0,
-        .dataset = NULL
+        .dataset = NULL,
+        .threads = 1
     };
     return config;
 }

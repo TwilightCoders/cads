@@ -4,7 +4,7 @@
 # Compiler settings
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99 -O2 -g
-LDFLAGS = -lm
+LDFLAGS = -lm -lpthread
 
 # Directories
 SRC_DIR = src

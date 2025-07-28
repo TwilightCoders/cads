@@ -1,0 +1,20 @@
+# CADS Threading Test Configuration
+
+[config]
+name = Threading Test
+description = Test multi-threaded search capabilities
+complexity = basic
+max_fields = 3
+max_constants = 128
+early_exit = true
+max_solutions = 1
+progress_interval = 250
+verbose = true
+threads = 4
+operations = add,xor,identity
+
+[packets]
+# Simple test packets for threading verification
+deadbeef 42 Test_Packet_1
+cafebabe a5 Test_Packet_2
+12345678 99 Test_Packet_3

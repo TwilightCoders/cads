@@ -68,18 +68,22 @@ uint64_t reverse_bits(uint64_t value, uint8_t bit_width) {
 
 // Advanced algorithm implementations
 uint64_t advanced_rotleft(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant; // Suppress unused parameter warning
     return rotate_left(a, b & 0x3F, 8); // Default to 8-bit for compatibility
 }
 
 uint64_t advanced_rotright(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant; // Suppress unused parameter warning
     return rotate_right(a, b & 0x3F, 8); // Default to 8-bit for compatibility
 }
 
 uint64_t advanced_crc8_ccitt(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant; // Suppress unused parameter warning
     return crc8_ccitt_table[(a ^ b) & 0xFF];
 }
 
 uint64_t advanced_crc8_dallas(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant; // Suppress unused parameter warning
     // Dallas/Maxim 1-Wire CRC-8 (different polynomial)
     uint8_t crc = 0;
     uint8_t data = (a ^ b) & 0xFF;
@@ -95,6 +99,7 @@ uint64_t advanced_crc8_dallas(uint64_t a, uint64_t b, uint64_t constant) {
 }
 
 uint64_t advanced_crc8_sae(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant; // Suppress unused parameter warning
     // SAE J1850 CRC-8
     uint8_t crc = 0xFF;
     uint8_t data = (a ^ b) & 0xFF;
@@ -110,6 +115,7 @@ uint64_t advanced_crc8_sae(uint64_t a, uint64_t b, uint64_t constant) {
 }
 
 uint64_t advanced_fletcher8(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)constant; // Suppress unused parameter warning
     // Fletcher-8 checksum variant
     uint8_t sum1 = a & 0xFF, sum2 = b & 0xFF;
     sum1 = (sum1 + sum2) & 0xFF;
@@ -118,14 +124,20 @@ uint64_t advanced_fletcher8(uint64_t a, uint64_t b, uint64_t constant) {
 }
 
 uint64_t advanced_swap_nibbles(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)b; // Suppress unused parameter warning
+    (void)constant; // Suppress unused parameter warning
     return ((a & 0x0F) << 4) | ((a & 0xF0) >> 4);
 }
 
 uint64_t advanced_reverse_bits(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)b; // Suppress unused parameter warning
+    (void)constant; // Suppress unused parameter warning
     return reverse_bits(a, 8); // Default to 8-bit
 }
 
 uint64_t advanced_lookup_table(uint64_t a, uint64_t b, uint64_t constant) {
+    (void)b; // Suppress unused parameter warning
+    (void)constant; // Suppress unused parameter warning
     return sample_lookup_table[a & 0xFF];
 }
 

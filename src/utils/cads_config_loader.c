@@ -86,6 +86,8 @@ static bool parse_config_section(cads_config_file_t* config, FILE* file) {
             config->progress_interval = atoi(value);
         } else if (strcmp(key, "verbose") == 0) {
             config->verbose = parse_bool(value);
+        } else if (strcmp(key, "threads") == 0) {
+            config->threads = atoi(value);
         } else if (strcmp(key, "operations") == 0) {
             char* operations_str = strdup(value);
             char* token = strtok(operations_str, ",");
@@ -170,6 +172,7 @@ cads_config_file_t* load_cads_config(const char* filename) {
     config->max_solutions = 0;
     config->progress_interval = 250;
     config->verbose = false;
+    config->threads = 1;
     
     char line[512];
     bool found_config = false;
@@ -235,6 +238,7 @@ cads_config_file_t* create_default_cads_config(void) {
     config->max_solutions = 0;
     config->progress_interval = 250;
     config->verbose = false;
+    config->threads = 1;
     config->custom_operations = NULL;
     config->custom_operation_count = 0;
     config->dataset = NULL;
@@ -260,13 +264,15 @@ cads_config_file_t* create_cads_config_from_cli(int argc, char* argv[]) {
         {"max-solutions", required_argument, 0, 'm'},
         {"progress-ms", required_argument, 0, 'p'},
         {"verbose", no_argument, 0, 'v'},
+        {"threading", no_argument, 0, 't'},
+        {"threads", required_argument, 0, 'T'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     
     int c;
     optind = 1; // Reset getopt
-    while ((c = getopt_long(argc, argv, "i:C:c:f:k:em:p:vh", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "i:C:c:f:k:em:p:vtT:h", long_options, NULL)) != -1) {
         switch (c) {
             case 'i':
                 input_file = optarg;
@@ -295,6 +301,12 @@ cads_config_file_t* create_cads_config_from_cli(int argc, char* argv[]) {
                 break;
             case 'v':
                 config->verbose = true;
+                break;
+            case 't':
+                config->threads = 0; // Auto-detect thread count
+                break;
+            case 'T':
+                config->threads = atoi(optarg);
                 break;
             case 'h':
                 free_cads_config(config);

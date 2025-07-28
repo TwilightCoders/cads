@@ -23,6 +23,8 @@ void print_usage(const char* program_name) {
     printf("  -m, --max-solutions N  Maximum solutions to find (default: unlimited)\n");
     printf("  -p, --progress-ms N    Progress update interval in ms (default: 250)\n");
     printf("  -v, --verbose          Verbose output\n");
+    printf("  -t, --threading        Enable multi-threaded search\n");
+    printf("  -T, --threads N        Number of threads (default: auto-detect)\n");
     printf("  -h, --help             Show this help message\n\n");
     
     printf("Examples:\n");
@@ -37,6 +39,9 @@ void print_usage(const char* program_name) {
     
     printf("  # Thorough analysis (find all solutions):\n");
     printf("  %s -i tests/data/gmrs_test_dataset.jsonl -c advanced -f 6 -k 256\n\n", program_name);
+    
+    printf("  # Multi-threaded analysis (faster):\n");
+    printf("  %s -C examples/mxt275_discovery.cads -t\n\n", program_name);
     
     printf("Packet Data Format (JSON Lines):\n");
     printf("  {\"packet\": \"9c30010000000000\", \"checksum\": \"31\", \"description\": \"CH1\"}\n");
@@ -88,7 +93,7 @@ int main(int argc, char* argv[]) {
         printf("✅ Loaded %zu packets successfully\n\n", config->dataset->count);
     }
     
-    // Create search results and progress tracker
+    // Create search results 
     search_results_t* results = create_search_results(50);
     if (!results) {
         fprintf(stderr, "❌ Error: Failed to create search results\n");
@@ -104,11 +109,12 @@ int main(int argc, char* argv[]) {
         benchmark = run_hardware_benchmark();
     }
     
-    progress_tracker_t tracker;
-    
-    // Execute checksum search
-    printf("🚀 Starting checksum algorithm discovery...\n\n");
-    bool search_success = execute_checksum_search(config->dataset, results, &tracker);
+    // Execute checksum search (threaded or single-threaded)
+    if (config->verbose) {
+        printf("🚀 Starting checksum algorithm discovery...\n\n");
+    }
+    // Always use unified threaded engine (handles both single and multi-threaded execution)
+    bool search_success = execute_checksum_search_threaded(config, results, &benchmark);
     
     if (!search_success) {
         fprintf(stderr, "❌ Error: Checksum search failed\n");

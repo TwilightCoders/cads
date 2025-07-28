@@ -9,7 +9,7 @@
 
 // Standard benchmark packet for consistent testing across all machines
 static const uint8_t BENCHMARK_PACKET[] = {0x9c, 0x30, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00};
-static const size_t BENCHMARK_PACKET_SIZE = 8;
+// static const size_t BENCHMARK_PACKET_SIZE = 8; // Removed unused constant
 static const uint64_t BENCHMARK_EXPECTED_CHECKSUM = 0x42; // Dummy value
 
 // Quick hardware benchmark - runs for ~1 second to measure baseline performance
@@ -41,7 +41,7 @@ hardware_benchmark_result_t run_hardware_benchmark(void) {
     uint64_t tests_performed = 0;
     uint64_t benchmark_duration_us = 5000000; // 5 seconds in microseconds
     int progress = 0;
-    int last_progress_shown = -1;
+    // int last_progress_shown = -1; // Removed unused variable
     
     // Simulate realistic loading with random progress updates
     do {
@@ -112,8 +112,8 @@ hardware_benchmark_result_t run_hardware_benchmark(void) {
             if (progress >= 100) break;
         }
         
-    } while (((current_time.tv_sec - start_time.tv_sec) * 1000000 + 
-             (current_time.tv_usec - start_time.tv_usec)) < benchmark_duration_us);
+    } while (((uint64_t)(current_time.tv_sec - start_time.tv_sec) * 1000000 + 
+             (uint64_t)(current_time.tv_usec - start_time.tv_usec)) < benchmark_duration_us);
     
     // Ensure we end at 100%
     printf("\r⚡ Initializing search engine [████████████████████] 100%% ✅\n");

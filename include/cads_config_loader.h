@@ -18,6 +18,7 @@ typedef struct {
     operation_t* custom_operations;
     int custom_operation_count;
     packet_dataset_t* dataset;
+    int threads;
 } cads_config_file_t;
 
 // Core configuration functions
