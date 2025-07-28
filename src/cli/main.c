@@ -50,8 +50,8 @@ void print_usage(const char* program_name) {
 
 int main(int argc, char* argv[]) {
     
-    // UNIFIED CONFIGURATION: Always use cads_config_file_t internally
-    cads_config_file_t* config = create_cads_config_from_cli(argc, argv);
+    // UNIFIED CONFIGURATION: Always use config_t internally
+    config_t* config = create_cads_config_from_cli(argc, argv);
     if (!config) {
         // Help was requested or error occurred
         if (argc > 1 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {

@@ -9,7 +9,7 @@
 #include "../../src/utils/config.h"
 
 // Forward declarations
-static bool parse_packets_section(cads_config_file_t* config, FILE* file);
+static bool parse_packets_section(config_t* config, FILE* file);
 
 static char* trim_whitespace(char* str) {
     char* end;
@@ -49,7 +49,7 @@ static bool parse_bool(const char* str) {
             strcasecmp(str, "1") == 0 || strcasecmp(str, "on") == 0);
 }
 
-static bool parse_config_section(cads_config_file_t* config, FILE* file) {
+static bool parse_config_section(config_t* config, FILE* file) {
     char line[512];
     
     while (fgets(line, sizeof(line), file)) {
@@ -112,7 +112,7 @@ static bool parse_config_section(cads_config_file_t* config, FILE* file) {
     return false;
 }
 
-static bool parse_packets_section(cads_config_file_t* config, FILE* file) {
+static bool parse_packets_section(config_t* config, FILE* file) {
     char line[512];
     
     config->dataset = create_packet_dataset(100);
@@ -152,14 +152,14 @@ static bool parse_packets_section(cads_config_file_t* config, FILE* file) {
     return config->dataset->count > 0;
 }
 
-cads_config_file_t* load_cads_config(const char* filename) {
+config_t* load_cads_config(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
         fprintf(stderr, "Error: Unable to open .cads config file: %s\n", filename);
         return NULL;
     }
     
-    cads_config_file_t* config = calloc(1, sizeof(cads_config_file_t));
+    config_t* config = calloc(1, sizeof(config_t));
     if (!config) {
         fclose(file);
         return NULL;
@@ -210,7 +210,7 @@ cads_config_file_t* load_cads_config(const char* filename) {
     return config;
 }
 
-void free_cads_config(cads_config_file_t* config) {
+void free_cads_config(config_t* config) {
     if (!config) return;
     
     free(config->name);
@@ -225,8 +225,8 @@ void free_cads_config(cads_config_file_t* config) {
 }
 
 // Create default CADS configuration
-cads_config_file_t* create_default_cads_config(void) {
-    cads_config_file_t* config = calloc(1, sizeof(cads_config_file_t));
+config_t* create_default_cads_config(void) {
+    config_t* config = calloc(1, sizeof(config_t));
     if (!config) return NULL;
     
     config->name = strdup("Default Configuration");
@@ -247,8 +247,8 @@ cads_config_file_t* create_default_cads_config(void) {
 }
 
 // Create CADS config from command line arguments
-cads_config_file_t* create_cads_config_from_cli(int argc, char* argv[]) {
-    cads_config_file_t* config = create_default_cads_config();
+config_t* create_cads_config_from_cli(int argc, char* argv[]) {
+    config_t* config = create_default_cads_config();
     if (!config) return NULL;
     
     const char* input_file = "tests/data/gmrs_test_dataset.jsonl";
@@ -319,7 +319,7 @@ cads_config_file_t* create_cads_config_from_cli(int argc, char* argv[]) {
     
     // If .cads file specified, load it and override CLI args
     if (cads_config_file) {
-        cads_config_file_t* file_config = load_cads_config(cads_config_file);
+        config_t* file_config = load_cads_config(cads_config_file);
         if (!file_config) {
             free_cads_config(config);
             return NULL;
@@ -338,7 +338,7 @@ cads_config_file_t* create_cads_config_from_cli(int argc, char* argv[]) {
 }
 
 // Load packets from JSON file into CADS config
-bool load_packets_into_cads_config(cads_config_file_t* config, const char* json_file) {
+bool load_packets_into_cads_config(config_t* config, const char* json_file) {
     if (!config || !json_file) return false;
     
     config->dataset = create_packet_dataset(100);

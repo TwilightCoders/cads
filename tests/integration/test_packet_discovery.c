@@ -52,7 +52,7 @@ void test_mxt275_algorithm_discovery(void) {
     TEST_ASSERT(success);
     
     // Create focused search configuration (using working parameters)
-    cads_config_file_t config = create_default_search_config();
+    config_t config = create_default_search_config();
     config.max_fields = 5;
     config.dataset = dataset;
     enable_early_exit(&config, 1);
@@ -113,7 +113,7 @@ void test_targeted_mxt275_discovery(void) {
         OP_IDENTITY
     };
     
-    cads_config_file_t config = create_custom_operation_config(mxt275_operations, 
+    config_t config = create_custom_operation_config(mxt275_operations, 
                                                            sizeof(mxt275_operations) / sizeof(mxt275_operations[0]));
     config.max_fields = 5;
     config.dataset = dataset;
@@ -199,7 +199,7 @@ void test_dataset_comparison(void) {
     
     // Test search with GMRS dataset first (should succeed)
     operation_t comparison_ops[] = {OP_IDENTITY, OP_ADD, OP_ONES_COMPLEMENT, OP_CONST_ADD, OP_XOR};
-    cads_config_file_t gmrs_config = create_custom_operation_config(comparison_ops, 5);
+    config_t gmrs_config = create_custom_operation_config(comparison_ops, 5);
     gmrs_config.max_fields = 5;
     gmrs_config.dataset = gmrs_dataset;
     
@@ -212,7 +212,7 @@ void test_dataset_comparison(void) {
            gmrs_success ? "SUCCESS" : "FAILED", gmrs_results->solution_count);
     
     // Test search with JSON dataset  
-    cads_config_file_t json_config = create_custom_operation_config(comparison_ops, 5);
+    config_t json_config = create_custom_operation_config(comparison_ops, 5);
     json_config.max_fields = 5;
     json_config.dataset = json_dataset;
     search_results_t* json_results = create_search_results(10);

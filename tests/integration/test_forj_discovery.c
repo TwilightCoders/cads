@@ -24,7 +24,7 @@ void test_forj_algorithm_discovery(void) {
     TEST_ASSERT(load_success);
     
     // Create focused search configuration for Forj algorithm discovery
-    cads_config_file_t config = create_default_search_config();  // Uses INTERMEDIATE complexity
+    config_t config = create_default_search_config();  // Uses INTERMEDIATE complexity
     config.max_fields = 4;        // Reduced for faster testing (still finds Forj algorithm)
     config.max_constants = 32;    // Reduced search space - focuses on smaller constants
     config.dataset = dataset;
@@ -79,7 +79,7 @@ void test_forj_discovery_with_custom_operations(void) {
         OP_IDENTITY
     };
     
-    cads_config_file_t config = create_custom_operation_config(forj_operations, 
+    config_t config = create_custom_operation_config(forj_operations, 
                                                            sizeof(forj_operations) / sizeof(forj_operations[0]));
     config.max_fields = 4;        // Reduced for faster testing
     config.max_constants = 16;    // Much smaller search space with custom operations

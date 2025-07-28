@@ -231,7 +231,7 @@ const char* get_complexity_name(complexity_level_t complexity) {
     }
 }
 
-uint64_t estimate_total_combinations(const cads_config_file_t* config, size_t packet_count) {
+uint64_t estimate_total_combinations(const config_t* config, size_t packet_count) {
     if (packet_count == 0) return 0;
     
     int algorithm_count;
@@ -247,7 +247,7 @@ uint64_t estimate_total_combinations(const cads_config_file_t* config, size_t pa
     return field_combinations * algorithm_count * config->max_constants;
 }
 
-double estimate_completion_time(const cads_config_file_t* config, size_t packet_count) {
+double estimate_completion_time(const config_t* config, size_t packet_count) {
     uint64_t total_combinations = estimate_total_combinations(config, packet_count);
     
     // Get average operations per second for this complexity level

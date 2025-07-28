@@ -4,8 +4,8 @@
 #include <stdlib.h>
 
 // Configuration creation functions
-cads_config_file_t create_default_search_config(void) {
-    cads_config_file_t config = {
+config_t create_default_search_config(void) {
+    config_t config = {
         .name = NULL,
         .description = NULL,
         .complexity = COMPLEXITY_INTERMEDIATE,
@@ -24,8 +24,8 @@ cads_config_file_t create_default_search_config(void) {
     return config;
 }
 
-cads_config_file_t create_basic_search_config(int max_fields, int max_constants) {
-    cads_config_file_t config = create_default_search_config();
+config_t create_basic_search_config(int max_fields, int max_constants) {
+    config_t config = create_default_search_config();
     config.complexity = COMPLEXITY_BASIC;
     config.max_fields = max_fields;
     config.max_constants = max_constants;
@@ -35,8 +35,8 @@ cads_config_file_t create_basic_search_config(int max_fields, int max_constants)
     return config;
 }
 
-cads_config_file_t create_fast_search_config(void) {
-    cads_config_file_t config = create_default_search_config();
+config_t create_fast_search_config(void) {
+    config_t config = create_default_search_config();
     config.complexity = COMPLEXITY_BASIC;
     config.max_fields = 3;
     config.max_constants = 16;
@@ -46,8 +46,8 @@ cads_config_file_t create_fast_search_config(void) {
     return config;
 }
 
-cads_config_file_t create_thorough_search_config(void) {
-    cads_config_file_t config = create_default_search_config();
+config_t create_thorough_search_config(void) {
+    config_t config = create_default_search_config();
     config.complexity = COMPLEXITY_ADVANCED;
     config.max_fields = 6;
     config.max_constants = 256;
@@ -57,8 +57,8 @@ cads_config_file_t create_thorough_search_config(void) {
     return config;
 }
 
-cads_config_file_t create_custom_operation_config(operation_t* operations, int operation_count) {
-    cads_config_file_t config = create_default_search_config();
+config_t create_custom_operation_config(operation_t* operations, int operation_count) {
+    config_t config = create_default_search_config();
     config.custom_operations = operations;
     config.custom_operation_count = operation_count;
     config.early_exit = true;
@@ -68,27 +68,27 @@ cads_config_file_t create_custom_operation_config(operation_t* operations, int o
 }
 
 // Configuration modification helpers
-void set_progress_interval(cads_config_file_t* config, int interval_ms) {
+void set_progress_interval(config_t* config, int interval_ms) {
     if (config && interval_ms > 0) {
         config->progress_interval = interval_ms;
     }
 }
 
-void enable_early_exit(cads_config_file_t* config, int max_solutions) {
+void enable_early_exit(config_t* config, int max_solutions) {
     if (config) {
         config->early_exit = true;
         config->max_solutions = max_solutions > 0 ? max_solutions : 1;
     }
 }
 
-void disable_early_exit(cads_config_file_t* config) {
+void disable_early_exit(config_t* config) {
     if (config) {
         config->early_exit = false;
         config->max_solutions = 0;  // Unlimited
     }
 }
 
-void set_complexity_level(cads_config_file_t* config, complexity_level_t complexity) {
+void set_complexity_level(config_t* config, complexity_level_t complexity) {
     if (config) {
         config->complexity = complexity;
         // Clear custom operations when setting complexity
@@ -97,7 +97,7 @@ void set_complexity_level(cads_config_file_t* config, complexity_level_t complex
     }
 }
 
-void set_custom_operations(cads_config_file_t* config, operation_t* operations, int count) {
+void set_custom_operations(config_t* config, operation_t* operations, int count) {
     if (config && operations && count > 0) {
         config->custom_operations = operations;
         config->custom_operation_count = count;
@@ -105,7 +105,7 @@ void set_custom_operations(cads_config_file_t* config, operation_t* operations, 
 }
 
 // Configuration validation
-bool validate_search_config(const cads_config_file_t* config) {
+bool validate_search_config(const config_t* config) {
     if (!config) return false;
     
     if (config->max_fields < 1 || config->max_fields > CADS_MAX_FIELDS) return false;
@@ -120,7 +120,7 @@ bool validate_search_config(const cads_config_file_t* config) {
     return true;
 }
 
-void print_search_config(const cads_config_file_t* config) {
+void print_search_config(const config_t* config) {
     if (!config) {
         printf("❌ NULL configuration\n");
         return;

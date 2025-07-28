@@ -61,7 +61,7 @@ int main() {
                test_configs[i].max_fields, test_configs[i].max_constants, test_configs[i].op_count);
         
         // Create configuration
-        cads_config_file_t config = create_custom_operation_config(test_configs[i].operations, test_configs[i].op_count);
+        config_t config = create_custom_operation_config(test_configs[i].operations, test_configs[i].op_count);
         config.max_fields = test_configs[i].max_fields;
         config.max_constants = test_configs[i].max_constants;
         config.dataset = dataset;
@@ -98,7 +98,7 @@ int main() {
     printf("\n🎯 Reproducing 32M+ tests/sec benchmark...\n");
     
     operation_t peak_ops[] = {OP_ONES_COMPLEMENT, OP_CONST_ADD};
-    cads_config_file_t peak_config = create_custom_operation_config(peak_ops, 2);
+    config_t peak_config = create_custom_operation_config(peak_ops, 2);
     peak_config.max_fields = 6;
     peak_config.max_constants = 64;
     peak_config.dataset = dataset;

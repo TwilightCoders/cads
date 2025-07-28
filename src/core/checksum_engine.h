@@ -11,7 +11,7 @@ search_results_t* create_search_results(size_t initial_capacity);
 void free_search_results(search_results_t* results);
 
 // Main search function
-bool execute_checksum_search(const cads_config_file_t* config,
+bool execute_checksum_search(const config_t* config,
                             search_results_t* results,
                             progress_tracker_t* tracker);
 
@@ -20,8 +20,8 @@ bool add_solution(search_results_t* results, const checksum_solution_t* solution
 bool validate_solution(const checksum_solution_t* solution, const packet_dataset_t* dataset);
 
 // Search strategy functions
-bool should_continue_search(const search_results_t* results, const cads_config_file_t* config);
-uint64_t estimate_search_space(const packet_dataset_t* dataset, const cads_config_file_t* config);
+bool should_continue_search(const search_results_t* results, const config_t* config);
+uint64_t estimate_search_space(const packet_dataset_t* dataset, const config_t* config);
 
 // Algorithm testing
 bool test_algorithm_combination(const uint8_t* field_indices, uint8_t field_count,

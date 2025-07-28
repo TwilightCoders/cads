@@ -10,7 +10,7 @@ static const char* format_number_with_emojis(uint64_t tests, char* emoji_buffer,
 
 // Display search space estimation with hardware-calibrated complexity emojis
 void display_search_estimation(const packet_dataset_t* dataset, 
-                              const cads_config_file_t* config,
+                              const config_t* config,
                               int algorithm_count,
                               const hardware_benchmark_result_t* benchmark) {
     
@@ -57,8 +57,8 @@ void display_search_estimation(const packet_dataset_t* dataset,
     }
 }
 
-// CADS-specific version that works with cads_config_file_t
-void display_search_estimation_cads(const cads_config_file_t* config,
+// CADS-specific version that works with config_t
+void display_search_estimation_cads(const config_t* config,
                                    int algorithm_count,
                                    const hardware_benchmark_result_t* benchmark) {
     

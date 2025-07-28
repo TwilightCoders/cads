@@ -25,7 +25,7 @@ int main() {
     
     operation_t ops[] = {OP_IDENTITY, OP_ADD};
     
-    cads_config_file_t config = create_custom_operation_config(ops, 2);
+    config_t config = create_custom_operation_config(ops, 2);
     config.max_fields = 2;
     config.max_constants = 4;
     config.dataset = dataset;

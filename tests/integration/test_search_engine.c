@@ -27,7 +27,7 @@ void test_custom_operation_selection(void) {
         OP_IDENTITY, OP_ADD, OP_ONES_COMPLEMENT, OP_CONST_ADD, OP_XOR
     };
     
-    cads_config_file_t config = create_custom_operation_config(forj_operations, 5);
+    config_t config = create_custom_operation_config(forj_operations, 5);
     config.max_fields = 5;
     config.dataset = dataset;
     
@@ -60,7 +60,7 @@ void test_standard_complexity_search(void) {
     bool load_success = load_packets_from_json(dataset, "data/gmrs_test_dataset.jsonl");
     TEST_ASSERT(load_success);
     
-    cads_config_file_t config = create_basic_search_config(3, 10);
+    config_t config = create_basic_search_config(3, 10);
     config.dataset = dataset;
     // Already uses standard complexity by default
     
@@ -118,7 +118,7 @@ void test_search_results_validation(void) {
 
 // Test early exit conditions
 void test_early_exit_conditions(void) {
-    cads_config_file_t config = create_default_search_config();
+    config_t config = create_default_search_config();
     enable_early_exit(&config, 1);
     
     search_results_t results = {0};

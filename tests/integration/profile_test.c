@@ -38,7 +38,7 @@ int main() {
         OP_ONES_COMPLEMENT, OP_CONST_ADD  // These shouldn't produce trivial solutions
     };
     
-    cads_config_file_t config = create_custom_operation_config(performance_operations, 2);
+    config_t config = create_custom_operation_config(performance_operations, 2);
     config.max_fields = 6;         // Larger search space for profiling
     config.max_constants = 64;     // Reasonable constant range
     config.dataset = dataset;

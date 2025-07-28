@@ -19,16 +19,16 @@ typedef struct {
     int custom_operation_count;
     packet_dataset_t* dataset;
     int threads;
-} cads_config_file_t;
+} config_t;
 
 // Core configuration functions
-cads_config_file_t* create_default_cads_config(void);
-cads_config_file_t* load_cads_config(const char* filename);
-cads_config_file_t* create_cads_config_from_cli(int argc, char* argv[]);
-void free_cads_config(cads_config_file_t* config);
+config_t* create_default_cads_config(void);
+config_t* load_cads_config(const char* filename);
+config_t* create_cads_config_from_cli(int argc, char* argv[]);
+void free_cads_config(config_t* config);
 
 // Configuration utilities
-void merge_cli_args_into_cads_config(cads_config_file_t* config, int argc, char* argv[]);
-bool load_packets_into_cads_config(cads_config_file_t* config, const char* json_file);
+void merge_cli_args_into_cads_config(config_t* config, int argc, char* argv[]);
+bool load_packets_into_cads_config(config_t* config, const char* json_file);
 
 #endif
