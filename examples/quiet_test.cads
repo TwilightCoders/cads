@@ -1,0 +1,15 @@
+# CADS Configuration File - Quiet Mode Test
+[config]
+name = "Quiet Test"
+description = "Test without benchmark when verbose=false"
+complexity = advanced
+max_fields = 4
+max_constants = 16
+early_exit = true
+max_solutions = 1
+progress_interval = 1000
+verbose = false
+
+[packets]
+{"packet": "9c30010000000000", "checksum": "30", "description": "Test1"}
+{"packet": "9c30020000000000", "checksum": "32", "description": "Test2"}

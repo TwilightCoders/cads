@@ -151,7 +151,9 @@ bool execute_checksum_search(const cads_config_file_t* config,
     if (config->custom_operation_count > 0 && config->custom_operations) {
         // Use custom operations
         algorithm_count = config->custom_operation_count;
-        printf("🎯 Using CUSTOM operation set (%d operations)\n", algorithm_count);
+        if (config->verbose) {
+            printf("🎯 Using CUSTOM operation set (%d operations)\n", algorithm_count);
+        }
     } else {
         // Use pre-canned complexity level
         const algorithm_registry_entry_t* complexity_algorithms = get_algorithms_by_complexity(config->complexity, &algorithm_count);
@@ -159,8 +161,10 @@ bool execute_checksum_search(const cads_config_file_t* config,
             cleanup_algorithm_registry();
             return false;
         }
-        printf("📊 Using %s complexity level (%d operations)\n", 
-                get_complexity_name(config->complexity), algorithm_count);
+        if (config->verbose) {
+            printf("📊 Using %s complexity level (%d operations)\n", 
+                   get_complexity_name(config->complexity), algorithm_count);
+        }
     }
     
     // Allocate and populate operations array
@@ -197,11 +201,13 @@ bool execute_checksum_search(const cads_config_file_t* config,
         }
     }
 
-    printf("🔍 Starting recursive exhaustive checksum analysis...\n");
-    printf("Dataset: %zu packets, Min packet length: %zu bytes\n", dataset->count, min_packet_length);
-    printf("Complexity: %s, Algorithms: %d\n", get_complexity_name(config->complexity), algorithm_count);
-    printf("Max fields: %d, Max constants: %d\n", config->max_fields, config->max_constants);
-    printf("Max operation depth: %d\n\n", config->max_fields - 1);
+    if (config->verbose) {
+        printf("🔍 Starting recursive exhaustive checksum analysis...\n");
+        printf("Dataset: %zu packets, Min packet length: %zu bytes\n", dataset->count, min_packet_length);
+        printf("Complexity: %s, Algorithms: %d\n", get_complexity_name(config->complexity), algorithm_count);
+        printf("Max fields: %d, Max constants: %d\n", config->max_fields, config->max_constants);
+        printf("Max operation depth: %d\n\n", config->max_fields - 1);
+    }
     
     // Initialize progress tracker
     if (tracker) {

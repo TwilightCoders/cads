@@ -5,7 +5,7 @@
 #include "../../include/cads_config_loader.h"
 
 void print_usage(const char* program_name) {
-    printf("CADS - Checksum Algorithm Discovery System v4.0\n");
+    printf("CADS - Checksum Algorithm Discovery System v1-beta\n");
     printf("Reverse engineering radio communication protocols through exhaustive checksum analysis.\n\n");
     
     printf("Usage: %s [OPTIONS]\n\n", program_name);
@@ -41,8 +41,6 @@ void print_usage(const char* program_name) {
 }
 
 int main(int argc, char* argv[]) {
-    printf("🔍 CADS - Checksum Algorithm Discovery System v1.0-beta\n");
-    printf("===================================================\n\n");
     
     // UNIFIED CONFIGURATION: Always use cads_config_file_t internally
     cads_config_file_t* config = create_cads_config_from_cli(argc, argv);
@@ -53,6 +51,12 @@ int main(int argc, char* argv[]) {
             return 0;
         }
         return 1;
+    }
+    
+    // Show header only in verbose mode
+    if (config->verbose) {
+        printf("🔍 CADS - Checksum Algorithm Discovery System v1-beta\n");
+        printf("===================================================\n\n");
     }
     
     // Display configuration info
@@ -77,7 +81,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    printf("✅ Loaded %zu packets successfully\n\n", config->dataset->count);
+    if (config->verbose) {
+        printf("✅ Loaded %zu packets successfully\n\n", config->dataset->count);
+    }
     
     // Create search results and progress tracker
     search_results_t* results = create_search_results(50);
