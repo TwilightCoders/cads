@@ -41,7 +41,7 @@ void print_usage(const char* program_name) {
 }
 
 int main(int argc, char* argv[]) {
-    printf("🔍 CADS - Checksum Algorithm Discovery System v4.0\n");
+    printf("🔍 CADS - Checksum Algorithm Discovery System v1.0-beta\n");
     printf("===================================================\n\n");
     
     // UNIFIED CONFIGURATION: Always use cads_config_file_t internally
