@@ -5,134 +5,23 @@
 #include <string.h>
 #include <stdio.h>
 
-// Recursive operation testing function
-bool test_operation_sequence(const packet_dataset_t* dataset, 
-                            const cads_config_file_t* config,
-                            const uint8_t* field_permutation,
-                            int field_count,
-                            const algorithm_registry_entry_t* algorithms,
-                            int algorithm_count,
-                            operation_t* operation_sequence,
-                            int current_depth,
-                            int max_depth,
-                            uint8_t constant,
-                            search_results_t* results,
-                            uint64_t* tests_performed,
-                            progress_tracker_t* tracker) {
-    
-    // Base case: we've built a complete operation sequence, test it
-    if (current_depth >= max_depth) {
-        (*tests_performed)++;
-        
-        // Update progress bar periodically (time-based)
-        if (tracker && should_display_progress(tracker)) {
-            update_progress(tracker, *tests_performed, results->solution_count);
-            display_detailed_progress(tracker, "Testing");
-        }
-        
-        // Test this operation sequence against all packets
-        bool all_match = true;
-        for (size_t packet_idx = 0; packet_idx < dataset->count; packet_idx++) {
-            const test_packet_t* packet = &dataset->packets[packet_idx];
-            
-            // Skip packets with different checksum sizes
-            if (packet->checksum_size != config->checksum_size) {
-                all_match = false;
-                break;
-            }
-            
-            // Check if packet has enough fields
-            for (int f = 0; f < field_count; f++) {
-                if (field_permutation[f] >= packet->packet_length) {
-                    all_match = false;
-                    break;
-                }
-            }
-            if (!all_match) break;
-            
-            // Apply operation sequence
-            uint64_t calculated = extract_packet_field_value(packet->packet_data, 
-                                                           packet->packet_length,
-                                                           field_permutation[0], 
-                                                           config->checksum_size);
-            
-            // Apply each operation in sequence
-            for (int op_idx = 0; op_idx < max_depth && (op_idx + 1) < field_count; op_idx++) {
-                uint64_t next_val = extract_packet_field_value(packet->packet_data,
-                                                             packet->packet_length,
-                                                             field_permutation[op_idx + 1],
-                                                             config->checksum_size);
-                calculated = execute_algorithm(operation_sequence[op_idx], calculated, next_val, constant);
-            }
-            
-            // Mask and compare
-            calculated = mask_checksum_to_size(calculated, config->checksum_size);
-            uint64_t expected = mask_checksum_to_size(packet->expected_checksum, config->checksum_size);
-            
-            if (calculated != expected) {
-                all_match = false;
-                break;
-            }
-        }
-        
-        if (all_match) {
-            // Found a solution!
-            checksum_solution_t solution = {0};
-            for (int f = 0; f < field_count; f++) {
-                solution.field_indices[f] = field_permutation[f];
-            }
-            solution.field_count = field_count;
-            for (int op = 0; op < max_depth && op < 4; op++) {
-                solution.operations[op] = operation_sequence[op];
-            }
-            solution.operation_count = max_depth;
-            solution.constant = constant;
-            solution.checksum_size = config->checksum_size;
-            solution.validated = true;
-            
-            if (add_solution(results, &solution)) {
-                // Move cursor down from progress area and print solution (preserving progress display)
-                printf("\n🎉 SOLUTION #%zu FOUND!\n", results->solution_count);
-                printf("   Fields: ");
-                for (int f = 0; f < field_count; f++) {
-                    printf("%d ", field_permutation[f]);
-                }
-                printf("\n   Operations: ");
-                for (int op = 0; op < max_depth; op++) {
-                    // Find algorithm name
-                    for (int a = 0; a < algorithm_count; a++) {
-                        if (algorithms[a].op == operation_sequence[op]) {
-                            printf("%s ", algorithms[a].name);
-                            break;
-                        }
-                    }
-                }
-                printf("\n   Constant: 0x%02X\n\n", constant);
-            }
-            return true;  // Found a solution
-        }
-        return false;  // No solution with this sequence
-    }
-    
-    // Recursive case: try each algorithm at this depth
-    for (int alg_idx = 0; alg_idx < algorithm_count; alg_idx++) {
-        operation_sequence[current_depth] = algorithms[alg_idx].op;
-        
-        if (test_operation_sequence(dataset, config, field_permutation, field_count,
-                                  algorithms, algorithm_count, operation_sequence,
-                                  current_depth + 1, max_depth, constant, results, tests_performed, tracker)) {
-            // Early exit if solution found and early exit enabled
-            if (config->early_exit) {
-                return true;
-            }
-        }
-    }
-    
-    return false;
-}
+// External function declaration (defined in operation_tester.c)
+extern bool test_operation_sequence(const packet_dataset_t* dataset, 
+                                   const config_t* config,
+                                   const uint8_t* field_permutation,
+                                   int field_count,
+                                   const algorithm_registry_entry_t* algorithms,
+                                   int algorithm_count,
+                                   operation_t* operation_sequence,
+                                   int current_depth,
+                                   int max_depth,
+                                   uint8_t constant,
+                                   search_results_t* results,
+                                   uint64_t* tests_performed,
+                                   progress_tracker_t* tracker);
 
 // Main exhaustive recursive search function
-bool execute_checksum_search(const cads_config_file_t* config,
+bool execute_checksum_search(const config_t* config,
                             search_results_t* results,
                             progress_tracker_t* tracker) {
     if (!config || !config->dataset || !results) return false;
@@ -218,9 +107,15 @@ bool execute_checksum_search(const cads_config_file_t* config,
             permutations *= (min_packet_length - i);
         }
         
-        uint64_t operation_sequences = 1;
-        for (int i = 0; i < config->max_fields - 1; i++) {
-            operation_sequences *= algorithm_count;
+        // Calculate operation sequences for ALL complexity levels (1 to max_fields+1)
+        uint64_t operation_sequences = 0;
+        for (int complexity = 1; complexity <= config->max_fields; complexity++) {
+            uint64_t ops_for_complexity = 1;
+            // Allow field_count+1 operations for complex patterns
+            for (int i = 0; i < complexity + 1; i++) {
+                ops_for_complexity *= algorithm_count;
+            }
+            operation_sequences += ops_for_complexity;
         }
         
         uint64_t estimated_tests = permutations * operation_sequences * config->max_constants;
@@ -253,7 +148,10 @@ bool execute_checksum_search(const cads_config_file_t* config,
             // Generate all permutations of these fields
             uint8_t permutations[24][CADS_MAX_FIELDS]; // Support up to 4! = 24
             uint32_t perm_count = 0;
-            generate_all_permutations(fields, field_count, permutations, &perm_count);
+            
+            if (!generate_all_permutations(fields, field_count, permutations, &perm_count)) {
+                continue; // Skip if permutation generation fails
+            }
             
             // Test each permutation with different operation sequences
             for (uint32_t p = 0; p < perm_count && !search_interrupted; p++) {
@@ -262,7 +160,8 @@ bool execute_checksum_search(const cads_config_file_t* config,
                     uint8_t constant = (uint8_t)const_val;
                     
                     // Use recursive function to test all operation sequences up to max depth
-                    int max_operation_depth = field_count > 1 ? field_count - 1 : 0;
+                    // ALLOW MORE OPERATIONS THAN FIELDS for complex patterns like MXT275
+                    int max_operation_depth = field_count + 1;  // Allow extra operations for unary ops
                     if (max_operation_depth > 0) {
                         operation_t operation_sequence[CADS_MAX_FIELDS];
                         
@@ -285,6 +184,8 @@ bool execute_checksum_search(const cads_config_file_t* config,
                     }
                 }
             }
+        next_field_mask:
+            continue;
         }
     }
     
@@ -375,7 +276,7 @@ bool add_solution(search_results_t* results, const checksum_solution_t* solution
     return true;
 }
 
-bool should_continue_search(const search_results_t* results, const cads_config_file_t* config) {
+bool should_continue_search(const search_results_t* results, const config_t* config) {
     if (!results || !config) return false;
     
     // Check early exit condition

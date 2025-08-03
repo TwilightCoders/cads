@@ -30,9 +30,17 @@ void display_search_estimation(const packet_dataset_t* dataset,
         permutations *= (min_packet_length - i);
     }
     
-    uint64_t operation_sequences = 1;
-    for (int i = 0; i < config->max_fields - 1; i++) {
-        operation_sequences *= algorithm_count;
+    // FIXED: Calculate for ALL complexity levels like original, not just max_fields
+    uint64_t operation_sequences = 0;
+    
+    // Sum operation sequences across all complexity levels (1 to max_fields)
+    for (int complexity = 1; complexity <= config->max_fields; complexity++) {
+        uint64_t ops_for_complexity = 1;
+        // Allow field_count+1 operations for complex patterns
+        for (int i = 0; i < complexity + 1; i++) {
+            ops_for_complexity *= algorithm_count;
+        }
+        operation_sequences += ops_for_complexity;
     }
     
     uint64_t estimated_tests = permutations * operation_sequences * config->max_constants;
@@ -80,9 +88,17 @@ void display_search_estimation_cads(const config_t* config,
         permutations *= (min_packet_length - i);
     }
     
-    uint64_t operation_sequences = 1;
-    for (int i = 0; i < config->max_fields - 1; i++) {
-        operation_sequences *= algorithm_count;
+    // FIXED: Calculate for ALL complexity levels like original, not just max_fields
+    uint64_t operation_sequences = 0;
+    
+    // Sum operation sequences across all complexity levels (1 to max_fields)
+    for (int complexity = 1; complexity <= config->max_fields; complexity++) {
+        uint64_t ops_for_complexity = 1;
+        // Allow field_count+1 operations for complex patterns
+        for (int i = 0; i < complexity + 1; i++) {
+            ops_for_complexity *= algorithm_count;
+        }
+        operation_sequences += ops_for_complexity;
     }
     
     uint64_t estimated_tests = permutations * operation_sequences * config->max_constants;

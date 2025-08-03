@@ -69,13 +69,16 @@ void update_progress(progress_tracker_t* tracker, uint64_t completed_tests, int 
     // Update smoothed ETA using more aggressive smoothing for stability
     // Alpha = 0.5 for ETA gives more stable estimates than rate smoothing
     const double alpha_eta = 0.5;
-    uint64_t remaining_tests = tracker->total_combinations - tracker->completed_tests;
     
     // Calculate raw ETA using smoothed rate (more stable than instantaneous rate)
-    if (tracker->smoothed_rate > 0 && remaining_tests > 0) {
+    if (tracker->smoothed_rate > 0 && tracker->completed_tests < tracker->total_combinations) {
+        uint64_t remaining_tests = tracker->total_combinations - tracker->completed_tests;
         double raw_eta = (double)remaining_tests / tracker->smoothed_rate;
         bool is_first_eta_update = (tracker->smoothed_eta == 0.0);
         tracker->smoothed_eta = exponential_moving_average(raw_eta, tracker->smoothed_eta, alpha_eta, is_first_eta_update);
+    } else if (tracker->completed_tests >= tracker->total_combinations) {
+        // Set ETA to 0 when we've completed the work
+        tracker->smoothed_eta = 0.0;
     }
     // If we can't calculate a new ETA, keep the previous smoothed value (don't reset to 0)
     
@@ -104,6 +107,11 @@ void finish_progress(progress_tracker_t* tracker) {
 // Calculate ETA in seconds using smoothed rate and ETA smoothing
 double calculate_eta_seconds(const progress_tracker_t* tracker) {
     if (!tracker || tracker->smoothed_rate <= 0) return -1;
+    
+    // If we've completed more tests than estimated, ETA is 0
+    if (tracker->completed_tests >= tracker->total_combinations) {
+        return 0;
+    }
     
     uint64_t remaining_tests = tracker->total_combinations - tracker->completed_tests;
     double raw_eta = (double)remaining_tests / tracker->smoothed_rate;
