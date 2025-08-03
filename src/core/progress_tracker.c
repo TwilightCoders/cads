@@ -212,43 +212,6 @@ void format_rate(double rate, char* buffer, size_t buffer_size) {
     }
 }
 
-// Display progress bar
-void display_progress_bar(const progress_tracker_t* tracker) {
-    if (!tracker) return;
-    
-    double percentage = 0.0;
-    if (tracker->total_combinations > 0) {
-        percentage = (double)tracker->completed_tests / tracker->total_combinations * 100.0;
-    }
-    
-    int filled_chars = (int)(percentage / 100.0 * PROGRESS_BAR_WIDTH);
-    
-    printf("\r" COLOR_BOLD "[");
-    
-    // Filled portion
-    printf(COLOR_GREEN);
-    for (int i = 0; i < filled_chars; i++) {
-        printf(PROGRESS_CHAR_FILLED);
-    }
-    
-    // Empty portion
-    printf(COLOR_RESET);
-    for (int i = filled_chars; i < PROGRESS_BAR_WIDTH; i++) {
-        printf(PROGRESS_CHAR_EMPTY);
-    }
-    
-    printf(COLOR_BOLD "] %.1f%%" COLOR_RESET, percentage);
-    
-    // Add ETA if available
-    double eta = calculate_eta_seconds(tracker);
-    if (eta > 0) {
-        char eta_str[64];
-        format_duration(eta, eta_str, sizeof(eta_str));
-        printf(" ETA: %s", eta_str);
-    }
-    
-    fflush(stdout);
-}
 
 // Display detailed progress information
 void display_detailed_progress(const progress_tracker_t* tracker, const char* current_operation) {

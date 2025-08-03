@@ -14,7 +14,6 @@ double calculate_elapsed_seconds(const progress_tracker_t* tracker);
 double calculate_tests_per_second(const progress_tracker_t* tracker);
 
 // Progress display formatting
-void display_progress_bar(const progress_tracker_t* tracker);
 void display_detailed_progress(const progress_tracker_t* tracker, const char* current_operation);
 void display_final_summary(const progress_tracker_t* tracker);
 void clear_progress_line(void);

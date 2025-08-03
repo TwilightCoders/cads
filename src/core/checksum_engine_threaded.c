@@ -9,6 +9,14 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>
+
+// Forward declarations
+typedef struct weighted_thread_context_s weighted_thread_context_t;
+
+// Function declarations
+void display_per_thread_progress(thread_progress_t** all_progress, int num_threads, progress_tracker_t* tracker);
+void print_found_solutions(const search_results_t* results, const algorithm_registry_entry_t* algorithms, int algorithm_count);
 
 // Recursive operation testing function declaration
 bool test_operation_sequence(const packet_dataset_t* dataset, 
@@ -48,9 +56,31 @@ typedef struct {
     bool* search_interrupted;
 } thread_context_t;
 
-// Progress monitoring thread function
+
+
+// Weighted thread context for operation partitioning
+struct weighted_thread_context_s {
+    int thread_id;
+    const config_t* config;
+    const packet_dataset_t* dataset;
+    const algorithm_registry_entry_t* algorithms;
+    int algorithm_count;
+    operation_t* assigned_operations;  // Operations this thread should explore
+    int num_assigned_operations;
+    search_results_t* results;
+    progress_tracker_t* tracker;
+    pthread_mutex_t* results_mutex;
+    pthread_mutex_t* progress_mutex;
+    uint64_t* total_tests;
+    bool* search_interrupted;
+    thread_progress_t* thread_progress;  // Per-thread progress tracking
+    thread_progress_t** all_thread_progress;  // Array of all thread progress for unified view
+    int total_threads;
+};
+
+// Enhanced progress monitoring thread with per-thread support  
 void* progress_monitor_thread(void* arg) {
-    thread_context_t* ctx = (thread_context_t*)arg;
+    weighted_thread_context_t* ctx = (weighted_thread_context_t*)arg;
     
     while (true) {
         pthread_mutex_lock(ctx->progress_mutex);
@@ -59,10 +89,24 @@ void* progress_monitor_thread(void* arg) {
         bool interrupted = *(ctx->search_interrupted);
         pthread_mutex_unlock(ctx->progress_mutex);
         
+        // Check if we should stop due to solution found and early exit enabled
+        if (current_solutions > 0 && ctx->config->early_exit) {
+            pthread_mutex_lock(ctx->progress_mutex);
+            *(ctx->search_interrupted) = true;
+            pthread_mutex_unlock(ctx->progress_mutex);
+            break;
+        }
+        
         // Update progress tracker
         update_progress(ctx->tracker, current_tests, current_solutions);
         if (should_display_progress(ctx->tracker)) {
-            display_detailed_progress(ctx->tracker, "Parallel");
+            // Check if user wants per-thread progress (could be a config option)
+            // For now, default to unified progress
+            if (ctx->config->verbose && ctx->total_threads > 1) {
+                display_per_thread_progress(ctx->all_thread_progress, ctx->total_threads, ctx->tracker);
+            } else {
+                display_detailed_progress(ctx->tracker, "Parallel");
+            }
         }
         
         // Exit if search is complete or interrupted
@@ -77,22 +121,35 @@ void* progress_monitor_thread(void* arg) {
     return NULL;
 }
 
-// Weighted thread context for operation partitioning
-typedef struct {
-    int thread_id;
-    const config_t* config;
-    const packet_dataset_t* dataset;
-    const algorithm_registry_entry_t* algorithms;
-    int algorithm_count;
-    operation_t* assigned_operations;  // Operations this thread should explore
-    int num_assigned_operations;
-    search_results_t* results;
-    progress_tracker_t* tracker;
-    pthread_mutex_t* results_mutex;
-    pthread_mutex_t* progress_mutex;
-    uint64_t* total_tests;
-    bool* search_interrupted;
-} weighted_thread_context_t;
+// Print solutions found during threaded search (called after all threads stopped)
+void print_found_solutions(const search_results_t* results, const algorithm_registry_entry_t* algorithms, int algorithm_count) {
+    if (!results || results->solution_count == 0) {
+        return;
+    }
+    
+    // Clear any remaining progress display before printing solutions
+    printf("\n");
+    
+    for (size_t sol_idx = 0; sol_idx < results->solution_count; sol_idx++) {
+        const checksum_solution_t* solution = &results->solutions[sol_idx];
+        
+        printf("🎉 SOLUTION #%zu FOUND!\n", sol_idx + 1);
+        printf("   Fields: ");
+        for (int f = 0; f < solution->field_count; f++) {
+            printf("%d ", solution->field_indices[f]);
+        }
+        printf("\n   Operations: ");
+        for (int op = 0; op < solution->operation_count; op++) {
+            for (int a = 0; a < algorithm_count; a++) {
+                if (algorithms[a].op == solution->operations[op]) {
+                    printf("%s ", algorithms[a].name);
+                    break;
+                }
+            }
+        }
+        printf("\n   Constant: 0x%02X\n\n", (unsigned int)solution->constant);
+    }
+}
 
 // Custom recursive function that forces the first operation but explores all combinations after
 bool test_constrained_operation_sequence(const packet_dataset_t* dataset, 
@@ -190,21 +247,7 @@ bool test_constrained_operation_sequence(const packet_dataset_t* dataset,
             solution.validated = true;
             
             if (add_solution(results, &solution)) {
-                printf("\n🎉 SOLUTION #%zu FOUND!\n", results->solution_count);
-                printf("   Fields: ");
-                for (int f = 0; f < field_count; f++) {
-                    printf("%d ", field_permutation[f]);
-                }
-                printf("\n   Operations: ");
-                for (int op = 0; op < max_depth; op++) {
-                    for (int a = 0; a < algorithm_count; a++) {
-                        if (algorithms[a].op == operation_sequence[op]) {
-                            printf("%s ", algorithms[a].name);
-                            break;
-                        }
-                    }
-                }
-                printf("\n   Constant: 0x%02X\n\n", constant);
+                // Solution found - don't print here, let main thread handle it after stopping all threads
             }
             return true;
         }
@@ -258,6 +301,7 @@ bool test_starting_operation_sequences(const packet_dataset_t* dataset,
 void* weighted_worker_thread(void* arg) {
     weighted_thread_context_t* ctx = (weighted_thread_context_t*)arg;
     uint64_t local_tests = 0;
+    time_t last_update = time(NULL);
     
     // If no operations assigned, exit immediately
     if (ctx->num_assigned_operations == 0) {
@@ -307,6 +351,16 @@ void* weighted_worker_thread(void* arg) {
                     pthread_mutex_unlock(ctx->progress_mutex);
                     
                     if (interrupted) {
+                        // Mark thread as completed when exiting due to interruption
+                        time_t interrupt_time = time(NULL);
+                        pthread_mutex_lock(&ctx->thread_progress->mutex);
+                        double total_elapsed = interrupt_time - ctx->thread_progress->start_time;
+                        if (total_elapsed > 0) {
+                            ctx->thread_progress->current_rate = (double)ctx->thread_progress->tests_performed / total_elapsed;
+                        }
+                        ctx->thread_progress->completed = true;
+                        ctx->thread_progress->last_update = interrupt_time;
+                        pthread_mutex_unlock(&ctx->thread_progress->mutex);
                         break;
                     }
                     
@@ -325,26 +379,60 @@ void* weighted_worker_thread(void* arg) {
                         operation_t test_sequence[CADS_MAX_FIELDS];
                         test_sequence[0] = start_operation;
                         
+                        size_t solutions_before = ctx->results->solution_count;
                         bool found = test_starting_operation_sequences(ctx->dataset, ctx->config,
                                                                      permutations[perm_idx], field_count,
                                                                      ctx->algorithms, ctx->algorithm_count,
                                                                      test_sequence, start_operation, max_operation_depth,
                                                                      constant, ctx->results, &local_tests);
                         
+                        // Check if this thread found new solutions and increment its counter
+                        if (found && ctx->results->solution_count > solutions_before) {
+                            pthread_mutex_lock(&ctx->thread_progress->mutex);
+                            ctx->thread_progress->solutions_found += (ctx->results->solution_count - solutions_before);
+                            pthread_mutex_unlock(&ctx->thread_progress->mutex);
+                        }
+                        
                         // Check for early exit
                         if (found && ctx->config->early_exit) {
                             pthread_mutex_lock(ctx->progress_mutex);
                             *(ctx->search_interrupted) = true;
                             pthread_mutex_unlock(ctx->progress_mutex);
+                            
+                            // Mark thread as completed when exiting due to solution found
+                            time_t solution_time = time(NULL);
+                            pthread_mutex_lock(&ctx->thread_progress->mutex);
+                            double total_elapsed = solution_time - ctx->thread_progress->start_time;
+                            if (total_elapsed > 0) {
+                                ctx->thread_progress->current_rate = (double)ctx->thread_progress->tests_performed / total_elapsed;
+                            }
+                            ctx->thread_progress->completed = true;
+                            ctx->thread_progress->last_update = solution_time;
+                            pthread_mutex_unlock(&ctx->thread_progress->mutex);
                             break;
                         }
                         
-                        // Update total tests periodically (thread-safe)
-                        if (local_tests % 1000 == 0) {
+                        // Update progress periodically based on time (more efficient)
+                        time_t current_time = time(NULL);
+                        if (current_time - last_update >= (ctx->config->progress_interval / 1000)) {
+                            // Update global progress  
                             pthread_mutex_lock(ctx->progress_mutex);
                             *(ctx->total_tests) += local_tests;
-                            local_tests = 0;
                             pthread_mutex_unlock(ctx->progress_mutex);
+                            
+                            // Update per-thread progress with rate calculation
+                            pthread_mutex_lock(&ctx->thread_progress->mutex);
+                            ctx->thread_progress->tests_performed += local_tests;
+                            // Calculate overall rate since thread start (more accurate than incremental rate)
+                            double total_elapsed = current_time - ctx->thread_progress->start_time;
+                            if (total_elapsed > 0) {
+                                ctx->thread_progress->current_rate = (double)ctx->thread_progress->tests_performed / total_elapsed;
+                            }
+                            ctx->thread_progress->last_update = current_time;
+                            pthread_mutex_unlock(&ctx->thread_progress->mutex);
+                            
+                            local_tests = 0;
+                            last_update = current_time;
                         }
                     }
                 }
@@ -352,12 +440,23 @@ void* weighted_worker_thread(void* arg) {
         }
     }
     
-    // Add remaining local tests
-    if (local_tests > 0) {
-        pthread_mutex_lock(ctx->progress_mutex);
-        *(ctx->total_tests) += local_tests;
-        pthread_mutex_unlock(ctx->progress_mutex);
+    // Add remaining local tests and mark thread as completed
+    pthread_mutex_lock(ctx->progress_mutex);
+    *(ctx->total_tests) += local_tests;
+    pthread_mutex_unlock(ctx->progress_mutex);
+    
+    // Update per-thread progress and mark as completed
+    time_t final_time = time(NULL);
+    pthread_mutex_lock(&ctx->thread_progress->mutex);
+    ctx->thread_progress->tests_performed += local_tests;
+    // Calculate final overall rate
+    double total_elapsed = final_time - ctx->thread_progress->start_time;
+    if (total_elapsed > 0) {
+        ctx->thread_progress->current_rate = (double)ctx->thread_progress->tests_performed / total_elapsed;
     }
+    ctx->thread_progress->last_update = final_time;
+    ctx->thread_progress->completed = true;  // Mark thread as completed
+    pthread_mutex_unlock(&ctx->thread_progress->mutex);
     
     return NULL;
 }
@@ -381,17 +480,13 @@ bool execute_weighted_checksum_search(const config_t* config,
         actual_threads = 1; // Single-threaded mode (threads == 1)
     }
     
-    // For single-threaded, use existing recursive engine
-    if (actual_threads == 1) {
-        if (config->verbose) {
-            printf("🔄 Single-threaded execution\n");
-        }
-        progress_tracker_t tracker;
-        return execute_checksum_search(config, results, &tracker);
+    // Single-threaded still uses the optimized weighted algorithm, just with 1 thread
+    if (actual_threads == 1 && config->verbose) {
+        printf("🔄 Single-threaded execution (optimized)\n");
     }
     
     // Multi-threaded weighted execution
-    if (config->verbose) {
+    if (config->verbose && actual_threads > 1) {
         printf("🧵 Weighted multi-threaded execution: %d threads\n", actual_threads);
     }
     
@@ -498,10 +593,35 @@ bool execute_weighted_checksum_search(const config_t* config,
     uint64_t total_tests = 0;
     bool search_interrupted = false;
     
+    // Initialize per-thread progress tracking
+    thread_progress_t* thread_progress = malloc(actual_threads * sizeof(thread_progress_t));
+    thread_progress_t** all_thread_progress = malloc(actual_threads * sizeof(thread_progress_t*));
+    if (!thread_progress || !all_thread_progress) {
+        free(contexts);
+        free(threads);
+        free_partitioning_result(partitions);
+        free(algorithms);
+        cleanup_algorithm_registry();
+        return false;
+    }
+    
+    time_t search_start_time = time(NULL);
+    for (int i = 0; i < actual_threads; i++) {
+        thread_progress[i].tests_performed = 0;
+        thread_progress[i].current_rate = 0.0;
+        thread_progress[i].last_update = search_start_time;
+        thread_progress[i].start_time = search_start_time;
+        thread_progress[i].completed = false;
+        thread_progress[i].solutions_found = 0;
+        pthread_mutex_init(&thread_progress[i].mutex, NULL);
+        all_thread_progress[i] = &thread_progress[i];
+    }
+    
     // Start progress monitoring thread
     pthread_t progress_thread;
     bool progress_thread_created = false;
-    thread_context_t progress_thread_ctx = {
+    weighted_thread_context_t progress_thread_ctx = {
+        .thread_id = -1,  // Monitor thread
         .config = config,
         .dataset = config->dataset,
         .algorithms = algorithms,
@@ -511,7 +631,9 @@ bool execute_weighted_checksum_search(const config_t* config,
         .results_mutex = &results_mutex,
         .progress_mutex = &progress_mutex,
         .total_tests = &total_tests,
-        .search_interrupted = &search_interrupted
+        .search_interrupted = &search_interrupted,
+        .all_thread_progress = all_thread_progress,
+        .total_threads = actual_threads
     };
     
     if (pthread_create(&progress_thread, NULL, progress_monitor_thread, &progress_thread_ctx) == 0) {
@@ -533,7 +655,10 @@ bool execute_weighted_checksum_search(const config_t* config,
             .results_mutex = &results_mutex,
             .progress_mutex = &progress_mutex,
             .total_tests = &total_tests,
-            .search_interrupted = &search_interrupted
+            .search_interrupted = &search_interrupted,
+            .thread_progress = &thread_progress[i],
+            .all_thread_progress = all_thread_progress,
+            .total_threads = actual_threads
         };
         
         if (pthread_create(&threads[i], NULL, weighted_worker_thread, &contexts[i]) != 0) {
@@ -556,19 +681,39 @@ bool execute_weighted_checksum_search(const config_t* config,
         pthread_join(threads[i], NULL);
     }
     
-    // Stop progress monitoring
+    // Final progress update to show correct solution count and completion state
+    update_progress(&tracker, total_tests, results->solution_count);
+    
+    // Stop progress monitoring first
     if (progress_thread_created) {
         search_interrupted = true;
         pthread_join(progress_thread, NULL);
     }
     
-    // Final progress update
-    update_progress(&tracker, total_tests, results->solution_count);
-    if (config->verbose || actual_threads == 1) {
-        display_detailed_progress(&tracker, (actual_threads > 1) ? "Parallel" : "Single");
+    // Show final progress with completion state (no ETA, just elapsed time)  
+    if (config->verbose && actual_threads > 1) {
+        // Mark all threads as complete for final display
+        time_t current_time = time(NULL);
+        for (int i = 0; i < actual_threads; i++) {
+            pthread_mutex_lock(&thread_progress[i].mutex);
+            thread_progress[i].last_update = current_time;
+            thread_progress[i].completed = true;  // Ensure all threads show as completed
+            pthread_mutex_unlock(&thread_progress[i].mutex);
+        }
+        display_per_thread_progress(all_thread_progress, actual_threads, &tracker);
+    }
+    
+    // Print any solutions found (now that all threads have stopped)
+    if (results->solution_count > 0) {
+        print_found_solutions(results, algorithms, algorithm_count);
     }
     
     // Cleanup
+    for (int i = 0; i < actual_threads; i++) {
+        pthread_mutex_destroy(&thread_progress[i].mutex);
+    }
+    free(thread_progress);
+    free(all_thread_progress);
     free(contexts);
     free(threads);
     free_partitioning_result(partitions);
@@ -579,3 +724,4 @@ bool execute_weighted_checksum_search(const config_t* config,
     
     return true;
 }
+
