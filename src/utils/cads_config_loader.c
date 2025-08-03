@@ -78,6 +78,8 @@ static bool parse_config_section(config_t* config, FILE* file) {
             config->max_fields = atoi(value);
         } else if (strcmp(key, "max_constants") == 0) {
             config->max_constants = atoi(value);
+        } else if (strcmp(key, "checksum_size") == 0) {
+            config->checksum_size = atoi(value);
         } else if (strcmp(key, "early_exit") == 0) {
             config->early_exit = parse_bool(value);
         } else if (strcmp(key, "max_solutions") == 0) {

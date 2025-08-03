@@ -113,8 +113,8 @@ int main(int argc, char* argv[]) {
     if (config->verbose) {
         printf("🚀 Starting checksum algorithm discovery...\n\n");
     }
-    // Always use unified threaded engine (handles both single and multi-threaded execution)
-    bool search_success = execute_checksum_search_threaded(config, results, &benchmark);
+    // Use weighted threading engine (handles both single and multi-threaded execution)
+    bool search_success = execute_weighted_checksum_search(config, results, &benchmark);
     
     if (!search_success) {
         fprintf(stderr, "❌ Error: Checksum search failed\n");
@@ -139,7 +139,28 @@ int main(int argc, char* argv[]) {
             for (int f = 0; f < solution->field_count; f++) {
                 printf("%d ", solution->field_indices[f]);
             }
-            printf("\n     Operations: %d total\n", solution->operation_count);
+            printf("\n     Operations: ");
+            for (int op = 0; op < solution->operation_count; op++) {
+                // Convert operation enum to readable name
+                const char* op_name = "UNKNOWN";
+                switch (solution->operations[op]) {
+                    case OP_IDENTITY: op_name = "IDENTITY"; break;
+                    case OP_ADD: op_name = "ADD"; break;
+                    case OP_XOR: op_name = "XOR"; break;
+                    case OP_ONES_COMPLEMENT: op_name = "~"; break;
+                    case OP_CONST_ADD: op_name = "C+"; break;
+                    case OP_CONST_SUB: op_name = "C-"; break;
+                    case OP_CONST_XOR: op_name = "C^"; break;
+                    case OP_SUB: op_name = "SUB"; break;
+                    case OP_MUL: op_name = "MUL"; break;
+                    case OP_DIV: op_name = "DIV"; break;
+                    case OP_MOD: op_name = "MOD"; break;
+                    default: op_name = "UNKNOWN"; break;
+                }
+                printf("%s", op_name);
+                if (op < solution->operation_count - 1) printf(" ");
+            }
+            printf(" (%d total)\n", solution->operation_count);
             printf("     Constant: 0x%02llX\n", (unsigned long long)solution->constant);
             printf("     Checksum size: %zu bytes\n", solution->checksum_size);
             printf("     Validated: %s\n", solution->validated ? "✅" : "❌");

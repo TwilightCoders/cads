@@ -15,7 +15,7 @@ typedef struct {
     const char* description;
     bool requires_constant;
     algorithm_func_t func;             // Function pointer for execution
-    double avg_ops_per_second;         // Performance estimate
+    int computational_weight;          // CPU cycles (based on x86 instruction timing)
 } algorithm_registry_entry_t;
 
 // Registry management functions
@@ -36,6 +36,9 @@ double estimate_completion_time(const config_t* config, size_t packet_count);
 
 // Algorithm execution wrapper
 uint64_t execute_algorithm(operation_t op, uint64_t a, uint64_t b, uint64_t constant);
+
+// Performance profiling
+void profile_algorithm_performance(void);
 
 // Complexity level statistics
 typedef struct {
