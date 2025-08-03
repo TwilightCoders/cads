@@ -4,6 +4,8 @@
 #include "../algorithms/advanced_ops.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <sys/time.h>
 
 // Forward declarations for algorithm functions
 uint64_t basic_add_wrapper(uint64_t a, uint64_t b, uint64_t constant);
@@ -40,40 +42,40 @@ static const complexity_stats_t complexity_statistics[] = {
 
 // Master algorithm registry with all operations
 static const algorithm_registry_entry_t master_registry[] = {
-    // BASIC algorithms (6 total)
-    {OP_ADD, COMPLEXITY_BASIC, "ADD", "Simple addition", false, basic_add_wrapper, 1000000.0},
-    {OP_SUB, COMPLEXITY_BASIC, "SUB", "Subtraction", false, basic_sub_wrapper, 1000000.0},
-    {OP_XOR, COMPLEXITY_BASIC, "XOR", "Exclusive OR", false, basic_xor_wrapper, 1000000.0},
-    {OP_AND, COMPLEXITY_BASIC, "AND", "Bitwise AND", false, basic_and_wrapper, 1000000.0},
-    {OP_OR, COMPLEXITY_BASIC, "OR", "Bitwise OR", false, basic_or_wrapper, 1000000.0},
-    {OP_IDENTITY, COMPLEXITY_BASIC, "ID", "Pass-through", false, basic_identity_wrapper, 1000000.0},
+    // BASIC algorithms (6 total) - All 1 cycle
+    {OP_ADD, COMPLEXITY_BASIC, "ADD", "Simple addition", false, basic_add_wrapper, 1},
+    {OP_SUB, COMPLEXITY_BASIC, "SUB", "Subtraction", false, basic_sub_wrapper, 1},
+    {OP_XOR, COMPLEXITY_BASIC, "XOR", "Exclusive OR", false, basic_xor_wrapper, 1},
+    {OP_AND, COMPLEXITY_BASIC, "AND", "Bitwise AND", false, basic_and_wrapper, 1},
+    {OP_OR, COMPLEXITY_BASIC, "OR", "Bitwise OR", false, basic_or_wrapper, 1},
+    {OP_IDENTITY, COMPLEXITY_BASIC, "ID", "Pass-through", false, basic_identity_wrapper, 1},
     
-    // INTERMEDIATE algorithms (12 total)
-    {OP_NOT, COMPLEXITY_INTERMEDIATE, "NOT", "Bitwise NOT", false, intermediate_not_wrapper, 500000.0},
-    {OP_LSHIFT, COMPLEXITY_INTERMEDIATE, "LSH", "Left shift", false, intermediate_lshift_wrapper, 500000.0},
-    {OP_RSHIFT, COMPLEXITY_INTERMEDIATE, "RSH", "Right shift", false, intermediate_rshift_wrapper, 500000.0},
-    {OP_MUL, COMPLEXITY_INTERMEDIATE, "MUL", "Multiplication", false, intermediate_mul_wrapper, 300000.0},
-    {OP_DIV, COMPLEXITY_INTERMEDIATE, "DIV", "Division", false, intermediate_div_wrapper, 100000.0},
-    {OP_MOD, COMPLEXITY_INTERMEDIATE, "MOD", "Modulo", false, intermediate_mod_wrapper, 100000.0},
-    {OP_NEGATE, COMPLEXITY_INTERMEDIATE, "NEG", "Two's complement negation", false, intermediate_negate_wrapper, 500000.0},
-    {OP_CONST_ADD, COMPLEXITY_INTERMEDIATE, "C+", "Add constant", true, intermediate_const_add_wrapper, 500000.0},
-    {OP_CONST_XOR, COMPLEXITY_INTERMEDIATE, "C^", "XOR with constant", true, intermediate_const_xor_wrapper, 500000.0},
-    {OP_CONST_SUB, COMPLEXITY_INTERMEDIATE, "C-", "Subtract constant", true, intermediate_const_sub_wrapper, 500000.0},
-    {OP_ONES_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "1COMP", "One's complement sum", false, intermediate_ones_complement_wrapper, 300000.0},
-    {OP_TWOS_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "2COMP", "Two's complement sum", false, intermediate_twos_complement_wrapper, 300000.0},
+    // INTERMEDIATE algorithms (12 total) - 1-30 cycles
+    {OP_NOT, COMPLEXITY_INTERMEDIATE, "NOT", "Bitwise NOT", false, intermediate_not_wrapper, 1},
+    {OP_LSHIFT, COMPLEXITY_INTERMEDIATE, "LSH", "Left shift", false, intermediate_lshift_wrapper, 1},
+    {OP_RSHIFT, COMPLEXITY_INTERMEDIATE, "RSH", "Right shift", false, intermediate_rshift_wrapper, 1},
+    {OP_MUL, COMPLEXITY_INTERMEDIATE, "MUL", "Multiplication", false, intermediate_mul_wrapper, 3},
+    {OP_DIV, COMPLEXITY_INTERMEDIATE, "DIV", "Division", false, intermediate_div_wrapper, 30},
+    {OP_MOD, COMPLEXITY_INTERMEDIATE, "MOD", "Modulo", false, intermediate_mod_wrapper, 30},
+    {OP_NEGATE, COMPLEXITY_INTERMEDIATE, "NEG", "Two's complement negation", false, intermediate_negate_wrapper, 1},
+    {OP_CONST_ADD, COMPLEXITY_INTERMEDIATE, "C+", "Add constant", true, intermediate_const_add_wrapper, 1},
+    {OP_CONST_XOR, COMPLEXITY_INTERMEDIATE, "C^", "XOR with constant", true, intermediate_const_xor_wrapper, 1},
+    {OP_CONST_SUB, COMPLEXITY_INTERMEDIATE, "C-", "Subtract constant", true, intermediate_const_sub_wrapper, 1},
+    {OP_ONES_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "1COMP", "One's complement sum", false, intermediate_ones_complement_wrapper, 1},
+    {OP_TWOS_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "2COMP", "Two's complement sum", false, intermediate_twos_complement_wrapper, 2},
     
-    // ADVANCED algorithms (11 total)
-    {OP_ROTLEFT, COMPLEXITY_ADVANCED, "ROTL", "Rotate left", false, NULL, 200000.0},
-    {OP_ROTRIGHT, COMPLEXITY_ADVANCED, "ROTR", "Rotate right", false, NULL, 200000.0},
-    {OP_CRC8_CCITT, COMPLEXITY_ADVANCED, "CRC8C", "CRC-8 CCITT", false, NULL, 50000.0},
-    {OP_CRC8_DALLAS, COMPLEXITY_ADVANCED, "CRC8D", "CRC-8 Dallas/Maxim", false, NULL, 10000.0},
-    {OP_CRC8_SAE, COMPLEXITY_ADVANCED, "CRC8S", "CRC-8 SAE J1850", false, NULL, 10000.0},
-    {OP_FLETCHER8, COMPLEXITY_ADVANCED, "FLETCH", "Fletcher-8 checksum", false, NULL, 100000.0},
-    {OP_SWAP_NIBBLES, COMPLEXITY_ADVANCED, "SWAP", "Swap nibbles", false, NULL, 300000.0},
-    {OP_REVERSE_BITS, COMPLEXITY_ADVANCED, "REVB", "Reverse bits", false, NULL, 50000.0},
-    {OP_LOOKUP_TABLE, COMPLEXITY_ADVANCED, "LUT", "Lookup table", false, NULL, 200000.0},
-    {OP_POLY_CRC, COMPLEXITY_ADVANCED, "PCRC", "Polynomial CRC", true, NULL, 5000.0},
-    {OP_CHECKSUM_VARIANT, COMPLEXITY_ADVANCED, "CVAR", "Checksum variant", true, NULL, 20000.0}
+    // ADVANCED algorithms (11 total) - 2-25 cycles
+    {OP_ROTLEFT, COMPLEXITY_ADVANCED, "ROTL", "Rotate left", false, NULL, 2},
+    {OP_ROTRIGHT, COMPLEXITY_ADVANCED, "ROTR", "Rotate right", false, NULL, 2},
+    {OP_CRC8_CCITT, COMPLEXITY_ADVANCED, "CRC8C", "CRC-8 CCITT", false, NULL, 8},
+    {OP_CRC8_DALLAS, COMPLEXITY_ADVANCED, "CRC8D", "CRC-8 Dallas/Maxim", false, NULL, 8},
+    {OP_CRC8_SAE, COMPLEXITY_ADVANCED, "CRC8S", "CRC-8 SAE J1850", false, NULL, 8},
+    {OP_FLETCHER8, COMPLEXITY_ADVANCED, "FLETCH", "Fletcher-8 checksum", false, NULL, 6},
+    {OP_SWAP_NIBBLES, COMPLEXITY_ADVANCED, "SWAP", "Swap nibbles", false, NULL, 2},
+    {OP_REVERSE_BITS, COMPLEXITY_ADVANCED, "REVB", "Reverse bits", false, NULL, 8},
+    {OP_LOOKUP_TABLE, COMPLEXITY_ADVANCED, "LUT", "Lookup table", false, NULL, 3},
+    {OP_POLY_CRC, COMPLEXITY_ADVANCED, "PCRC", "Polynomial CRC", true, NULL, 20},
+    {OP_CHECKSUM_VARIANT, COMPLEXITY_ADVANCED, "CVAR", "Checksum variant", true, NULL, 5}
 };
 
 // Wrapper functions for basic operations
@@ -188,7 +190,7 @@ const algorithm_registry_entry_t* get_algorithms_by_complexity(complexity_level_
     int filtered_count = 0;
     
     for (int i = 0; i < g_algorithm_count; i++) {
-        if (complexity == COMPLEXITY_ALL || g_algorithm_registry[i].complexity == complexity) {
+        if (complexity == COMPLEXITY_ALL || g_algorithm_registry[i].complexity <= complexity) {
             filtered_algorithms[filtered_count++] = g_algorithm_registry[i];
         }
     }
@@ -274,4 +276,39 @@ uint64_t execute_algorithm(operation_t op, uint64_t a, uint64_t b, uint64_t cons
 const complexity_stats_t* get_complexity_stats(int* count) {
     *count = sizeof(complexity_statistics) / sizeof(complexity_statistics[0]);
     return complexity_statistics;
+}
+
+// Profile actual operation performance to validate weights
+void profile_algorithm_performance(void) {
+    printf("🔬 Profiling algorithm performance...\n");
+    
+    const int ITERATIONS = 1000000;
+    uint64_t test_values[] = {0x12345678, 0xABCDEF00, 0x55AA55AA, 0xFF00FF00};
+    const int NUM_TESTS = sizeof(test_values) / sizeof(test_values[0]);
+    
+    for (int i = 0; i < g_algorithm_count; i++) {
+        const algorithm_registry_entry_t* entry = &g_algorithm_registry[i];
+        
+        struct timeval start, end;
+        gettimeofday(&start, NULL);
+        
+        // Run operation many times to get timing
+        volatile uint64_t result = 0; // volatile prevents optimization
+        for (int iter = 0; iter < ITERATIONS; iter++) {
+            for (int t = 0; t < NUM_TESTS; t++) {
+                result += execute_algorithm(entry->op, test_values[t], test_values[(t+1) % NUM_TESTS], 0xD0);
+            }
+        }
+        
+        gettimeofday(&end, NULL);
+        
+        double elapsed_ms = (end.tv_sec - start.tv_sec) * 1000.0 + 
+                           (end.tv_usec - start.tv_usec) / 1000.0;
+        double ops_per_ms = (ITERATIONS * NUM_TESTS) / elapsed_ms;
+        
+        printf("   %s: %.2f M ops/sec (weight: %d, result: %llu)\n", 
+               entry->description, ops_per_ms / 1000.0, 
+               entry->computational_weight, (unsigned long long)result);
+    }
+    printf("\n");
 }
