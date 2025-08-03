@@ -16,9 +16,11 @@ BUILD_DIR = ../build/tests
 CORE_SOURCES = $(SRC_DIR)/src/core/packet_data.c \
                $(SRC_DIR)/src/core/algorithm_registry.c \
                $(SRC_DIR)/src/core/checksum_engine_recursive.c \
+               $(SRC_DIR)/src/core/operation_tester.c \
                $(SRC_DIR)/src/core/progress_tracker.c \
                $(SRC_DIR)/src/algorithms/basic_ops.c \
                $(SRC_DIR)/src/algorithms/intermediate_ops.c \
+               $(SRC_DIR)/src/algorithms/advanced_ops.c \
                $(SRC_DIR)/src/utils/field_combiner.c \
                $(SRC_DIR)/src/utils/config.c
 

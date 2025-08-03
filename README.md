@@ -106,17 +106,17 @@ CADS accepts JSON Lines format for packet datasets:
 
 ```c
 // Basic search (6 operations, fast)
-cads_config_file_t config = create_basic_search_config(3, 16);
+config_t config = create_basic_search_config(3, 16);
 
 // Default search (17 operations, balanced)  
-cads_config_file_t config = create_default_search_config();
+config_t config = create_default_search_config();
 
 // Thorough search (29 operations, comprehensive)
-cads_config_file_t config = create_thorough_search_config();
+config_t config = create_thorough_search_config();
 
 // Custom operation set (targeted)
 operation_t ops[] = {OP_ADD, OP_XOR, OP_ONES_COMPLEMENT};
-cads_config_file_t config = create_custom_operation_config(ops, 3);
+config_t config = create_custom_operation_config(ops, 3);
 ```
 
 ### Performance Tuning

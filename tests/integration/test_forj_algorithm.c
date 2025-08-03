@@ -31,15 +31,19 @@ void test_forj_algorithm_sequence(void) {
     result = execute_algorithm(OP_ONES_COMPLEMENT, temp, 0, 0);
     TEST_ASSERT_EQUAL_HEX8(0xFF, (uint8_t)result);  // ~0x00 = 0xFF
     
-    // Step 3: CONST_ADD with field[3] and constant 0xD0  
-    result = execute_algorithm(OP_CONST_ADD, result, packet[3], 0xD0);
-    TEST_ASSERT_EQUAL_HEX8(0xCF, (uint8_t)result);  // 0xFF + 0x00 + 0xD0 = 0xCF
+    // Step 3: CONST_ADD with constant 0xD0  
+    result = execute_algorithm(OP_CONST_ADD, result, 0, 0xD0);
+    TEST_ASSERT_EQUAL_HEX8(0xCF, (uint8_t)result);  // 0xFF + 0xD0 = 0xCF
     
-    // Step 4: XOR with field[2]
+    // Step 4: XOR with field[3]
+    result = execute_algorithm(OP_XOR, result, packet[3], 0);
+    TEST_ASSERT_EQUAL_HEX8(0xCF, (uint8_t)result);  // 0xCF ^ 0x00 = 0xCF
+    
+    // Step 5: XOR with field[2]
     result = execute_algorithm(OP_XOR, result, packet[2], 0);
     TEST_ASSERT_EQUAL_HEX8(0xCE, (uint8_t)result);  // 0xCF ^ 0x01 = 0xCE
     
-    // Step 5: Final ONES_COMPLEMENT
+    // Step 6: Final ONES_COMPLEMENT
     result = execute_algorithm(OP_ONES_COMPLEMENT, result, 0, 0);
     TEST_ASSERT_EQUAL_HEX8(expected, (uint8_t)result);  // ~0xCE = 0x31
     
@@ -69,8 +73,11 @@ void test_forj_algorithm_all_packets(void) {
         uint64_t temp = execute_algorithm(OP_ADD, result, packet->packet_data[4], 0);
         result = execute_algorithm(OP_ONES_COMPLEMENT, temp, 0, 0);
         
-        // CONST_ADD with field[3] and constant 0xD0
-        result = execute_algorithm(OP_CONST_ADD, result, packet->packet_data[3], 0xD0);
+        // CONST_ADD with constant 0xD0
+        result = execute_algorithm(OP_CONST_ADD, result, 0, 0xD0);
+        
+        // XOR with field[3]
+        result = execute_algorithm(OP_XOR, result, packet->packet_data[3], 0);
         
         // XOR with field[2]
         result = execute_algorithm(OP_XOR, result, packet->packet_data[2], 0);
@@ -104,9 +111,10 @@ void test_forj_algorithm_edge_cases(void) {
     uint64_t result = zeros[5];  // 0x00
     uint64_t temp = execute_algorithm(OP_ADD, result, zeros[4], 0);  // 0x00
     result = execute_algorithm(OP_ONES_COMPLEMENT, temp, 0, 0);      // 0xFF
-    result = execute_algorithm(OP_CONST_ADD, result, zeros[3], 0xD0); // 0xCF
-    result = execute_algorithm(OP_XOR, result, zeros[2], 0);         // 0xCF
-    result = execute_algorithm(OP_ONES_COMPLEMENT, result, 0, 0);    // 0x30
+    result = execute_algorithm(OP_CONST_ADD, result, 0, 0xD0);       // 0xFF + 0xD0 = 0xCF
+    result = execute_algorithm(OP_XOR, result, zeros[3], 0);         // 0xCF ^ 0x00 = 0xCF
+    result = execute_algorithm(OP_XOR, result, zeros[2], 0);         // 0xCF ^ 0x00 = 0xCF
+    result = execute_algorithm(OP_ONES_COMPLEMENT, result, 0, 0);    // ~0xCF = 0x30
     
     TEST_ASSERT_EQUAL_HEX8(0x30, (uint8_t)result);
     
@@ -114,13 +122,14 @@ void test_forj_algorithm_edge_cases(void) {
     uint8_t ones[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     
     result = ones[5];  // 0xFF
-    temp = execute_algorithm(OP_ADD, result, ones[4], 0);        // 0xFE (overflow)
-    result = execute_algorithm(OP_ONES_COMPLEMENT, temp, 0, 0);  // 0x01
-    result = execute_algorithm(OP_CONST_ADD, result, ones[3], 0xD0); // 0xD0
-    result = execute_algorithm(OP_XOR, result, ones[2], 0);      // 0x2F
-    result = execute_algorithm(OP_ONES_COMPLEMENT, result, 0, 0); // 0xD0
+    temp = execute_algorithm(OP_ADD, result, ones[4], 0);        // 0xFF + 0xFF = 0xFE (with overflow wrap)
+    result = execute_algorithm(OP_ONES_COMPLEMENT, temp, 0, 0);  // ~0xFE = 0x01
+    result = execute_algorithm(OP_CONST_ADD, result, 0, 0xD0);   // 0x01 + 0xD0 = 0xD1
+    result = execute_algorithm(OP_XOR, result, ones[3], 0);      // 0xD1 ^ 0xFF = 0x2E
+    result = execute_algorithm(OP_XOR, result, ones[2], 0);      // 0x2E ^ 0xFF = 0xD1
+    result = execute_algorithm(OP_ONES_COMPLEMENT, result, 0, 0); // ~0xD1 = 0x2E
     
-    TEST_ASSERT_EQUAL_HEX8(0xD0, (uint8_t)result);
+    TEST_ASSERT_EQUAL_HEX8(0x2E, (uint8_t)result);
     
     tearDown();  // Clean up
 }

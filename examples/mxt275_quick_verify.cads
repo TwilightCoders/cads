@@ -7,13 +7,14 @@ description = Real MXT275 algorithm (Fields 5,4,3,2 with 1COMP+CVAR+XOR+1COMP, C
 complexity = advanced
 max_fields = 4
 max_constants = 209
+checksum_size = 1
 early_exit = true
 max_solutions = 1
 progress_interval = 100
 verbose = true
 
-# Real MXT275 operations: 1COMP, CVAR (const_add), XOR, 1COMP
-operations = ones_complement,const_add,xor
+# Real MXT275 operations: ADD, 1COMP, CONST_ADD, XOR, 1COMP  
+operations = add,ones_complement,const_add,xor
 
 [packets]
 # MXT275 UART packet samples - AUTHENTIC dataset from actual radio monitoring

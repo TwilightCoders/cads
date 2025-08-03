@@ -10,7 +10,7 @@ early_exit = true
 max_solutions = 1
 progress_interval = 250
 verbose = true
-threads = 4
+threads = 8
 operations = add,xor,identity
 
 [packets]

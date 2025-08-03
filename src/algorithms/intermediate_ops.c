@@ -39,7 +39,8 @@ uint64_t intermediate_negate(uint64_t a, uint64_t b, uint64_t constant) {
 }
 
 uint64_t intermediate_const_add(uint64_t a, uint64_t b, uint64_t constant) {
-    return a + b + constant;
+    (void)b;  // Ignore b parameter like original
+    return a + constant;
 }
 
 uint64_t intermediate_const_xor(uint64_t a, uint64_t b, uint64_t constant) {
