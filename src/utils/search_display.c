@@ -28,15 +28,19 @@ static const unit_mapping_t format_number_units[] = {
     {0.0,             1.0,             "", false, "%.0f%s"}  // Base case
 };
 
+// Time constants
+#define SECONDS_PER_YEAR 31536000.0
+#define MAX_REASONABLE_ETA_YEARS 100
+
 // Time unit mapping for duration formatting (seconds to years)
 static const unit_mapping_t format_time_units[] = {
-    {31536000.0, 31536000.0, "y", true, "%d%s"},    // Years - show months remainder
-    {2592000.0,  2592000.0,  "mo", true, "%d%s"},   // Months - show days remainder
-    {604800.0,   604800.0,   "w", true, "%d%s"},    // Weeks - show days remainder
-    {86400.0,    86400.0,    "d", true, "%d%s"},    // Days - show hours remainder
-    {3600.0,     3600.0,     "h", true, "%d%s"},    // Hours - show minutes remainder
-    {60.0,       60.0,       "m", true, "%d%s"},    // Minutes - show seconds remainder  
-    {0.0,        1.0,        "s", false, "%.0f%s"}  // Seconds - no remainder
+    {SECONDS_PER_YEAR, SECONDS_PER_YEAR, "y", true, "%d%s"},    // Years - show months remainder
+    {2592000.0,        2592000.0,        "mo", true, "%d%s"},   // Months - show days remainder
+    {604800.0,         604800.0,         "w", true, "%d%s"},    // Weeks - show days remainder
+    {86400.0,          86400.0,          "d", true, "%d%s"},    // Days - show hours remainder
+    {3600.0,           3600.0,           "h", true, "%d%s"},    // Hours - show minutes remainder
+    {60.0,             60.0,             "m", true, "%d%s"},    // Minutes - show seconds remainder  
+    {0.0,              1.0,              "s", false, "%.0f%s"}  // Seconds - no remainder
 };
 
 // Universal formatter that works with any unit mapping
@@ -289,6 +293,10 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
         }
     }
     
+    // Track maximum ETA among threads for overall ETA calculation
+    double max_thread_eta_seconds = 0.0;
+    bool any_thread_active = false;
+    
     // Display per-thread progress bars first
     for (int i = 0; i < num_threads; i++) {
         thread_progress_t* progress = all_progress[i];
@@ -328,9 +336,14 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
             double remaining_thread_tests = thread_estimated - thread_tests;
             if (remaining_thread_tests > 0) {
                 double thread_eta_seconds = remaining_thread_tests / thread_rate;
-                if (thread_eta_seconds >= 31536000.0 * 100) { // >= 100 years
+                if (thread_eta_seconds >= SECONDS_PER_YEAR * MAX_REASONABLE_ETA_YEARS) {
                     snprintf(thread_eta_str, sizeof(thread_eta_str), "∞");
                 } else {
+                    // Track this for overall ETA calculation
+                    if (thread_eta_seconds > max_thread_eta_seconds) {
+                        max_thread_eta_seconds = thread_eta_seconds;
+                    }
+                    any_thread_active = true;
                     (void)format_with_units(thread_eta_seconds, thread_eta_str, sizeof(thread_eta_str), format_time_units, ARRAY_SIZE(format_time_units));
                 }
             } else {
@@ -360,19 +373,13 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
     // Display total progress bar using builder
     double overall_elapsed = difftime(time(NULL), tracker->start_time.tv_sec);
     
-    // Calculate overall ETA
+    // Calculate overall ETA as maximum of all thread ETAs (parallel processing)
     char overall_eta_str[32];
     bool overall_complete = (tracker->completed_tests >= tracker->total_combinations);
     if (overall_complete) {
         snprintf(overall_eta_str, sizeof(overall_eta_str), "Done");
-    } else if (tracker->smoothed_rate > 0) {
-        double remaining_tests = tracker->total_combinations - tracker->completed_tests;
-        double eta_seconds = remaining_tests / tracker->smoothed_rate;
-        if (eta_seconds >= 31536000.0 * 100) { // >= 100 years
-            snprintf(overall_eta_str, sizeof(overall_eta_str), "∞");
-        } else {
-            (void)format_with_units(eta_seconds, overall_eta_str, sizeof(overall_eta_str), format_time_units, ARRAY_SIZE(format_time_units));
-        }
+    } else if (any_thread_active && max_thread_eta_seconds < SECONDS_PER_YEAR * MAX_REASONABLE_ETA_YEARS) {
+        (void)format_with_units(max_thread_eta_seconds, overall_eta_str, sizeof(overall_eta_str), format_time_units, ARRAY_SIZE(format_time_units));
     } else {
         snprintf(overall_eta_str, sizeof(overall_eta_str), "∞");
     }
