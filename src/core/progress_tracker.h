@@ -5,6 +5,7 @@
 
 // Progress display functions
 void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinations, int interval_ms);
+void set_thread_estimates(progress_tracker_t* tracker, uint64_t* estimates, int num_threads);
 void update_progress(progress_tracker_t* tracker, uint64_t completed_tests, int solutions_found);
 void finish_progress(progress_tracker_t* tracker);
 

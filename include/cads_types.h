@@ -73,6 +73,8 @@ typedef struct {
     struct timeval last_progress_display;       // Last time progress was displayed
     int solutions_found;
     int progress_interval_ms;           // Progress update interval in milliseconds
+    uint64_t* thread_estimates;         // Per-thread work estimates based on partition weights
+    int num_thread_estimates;           // Number of thread estimates
 } progress_tracker_t;
 
 

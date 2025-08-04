@@ -563,6 +563,33 @@ bool execute_weighted_checksum_search(const config_t* config,
     progress_tracker_t tracker;
     init_progress_tracker(&tracker, estimated_tests, config->progress_interval);
     
+    // Calculate per-thread work estimates using actual combinatorial formula
+    uint64_t* thread_estimates = malloc(actual_threads * sizeof(uint64_t));
+    if (thread_estimates) {
+        for (int i = 0; i < actual_threads; i++) {
+            if (i < partitions->num_threads) {
+                // Calculate precise search space for constrained recursive search
+                // Thread starts with N assigned operations, then branches to all operations
+                int thread_assigned_ops = partitions->partitions[i].num_assigned_operations;
+                
+                uint64_t thread_operation_sequences = 0;
+                for (int complexity = 1; complexity <= config->max_fields; complexity++) {
+                    // N starting operations × total_ops^(remaining positions)
+                    uint64_t ops_for_complexity = thread_assigned_ops;
+                    for (int j = 1; j < complexity + 1; j++) {
+                        ops_for_complexity *= algorithm_count;
+                    }
+                    thread_operation_sequences += ops_for_complexity;
+                }
+                
+                thread_estimates[i] = permutations * thread_operation_sequences * config->max_constants;
+            } else {
+                thread_estimates[i] = estimated_tests / actual_threads; // Fallback
+            }
+        }
+        set_thread_estimates(&tracker, thread_estimates, actual_threads);
+    }
+    
     if (config->verbose) {
         printf("🔍 Starting weighted parallel exhaustive checksum analysis...\n");
         printf("Dataset: %zu packets, Min packet length: %zu bytes\n", config->dataset->count, min_packet_length);
@@ -716,6 +743,9 @@ bool execute_weighted_checksum_search(const config_t* config,
     free(all_thread_progress);
     free(contexts);
     free(threads);
+    if (tracker.thread_estimates) {
+        free(tracker.thread_estimates);
+    }
     free_partitioning_result(partitions);
     pthread_mutex_destroy(&results_mutex);
     pthread_mutex_destroy(&progress_mutex);

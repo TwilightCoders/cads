@@ -31,6 +31,16 @@ void init_progress_tracker(progress_tracker_t* tracker, uint64_t total_combinati
     tracker->last_progress_display = tracker->start_time;
     tracker->solutions_found = 0;
     tracker->progress_interval_ms = interval_ms;
+    tracker->thread_estimates = NULL;
+    tracker->num_thread_estimates = 0;
+}
+
+// Set per-thread work estimates based on partition weights
+void set_thread_estimates(progress_tracker_t* tracker, uint64_t* estimates, int num_threads) {
+    if (!tracker) return;
+    
+    tracker->thread_estimates = estimates;
+    tracker->num_thread_estimates = num_threads;
 }
 
 // Update progress tracking

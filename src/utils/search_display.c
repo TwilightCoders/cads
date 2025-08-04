@@ -1,6 +1,7 @@
 #include "search_display.h"
 #include "hardware_benchmark.h"
 #include "../core/progress_tracker.h"
+#include "../core/thread_partitioner.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -209,6 +210,7 @@ typedef enum {
     PROGRESS_SHOW_SOLUTIONS = 1 << 3
 } progress_token_flags_t;
 
+
 // Progress bar builder - creates a formatted progress bar with optional tokens
 static void build_progress_bar(const char* label, uint64_t completed, uint64_t total, double rate, 
                               double elapsed_seconds, const char* eta_str, int solutions, 
@@ -301,8 +303,13 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
         int thread_solutions = progress->solutions_found;
         pthread_mutex_unlock(&progress->mutex);
         
-        // Calculate thread's estimated portion and elapsed time
-        uint64_t thread_estimated = tracker->total_combinations / num_threads;
+        // Use thread estimate from tracker, fallback to equal split
+        uint64_t thread_estimated;
+        if (tracker->thread_estimates && i < tracker->num_thread_estimates) {
+            thread_estimated = tracker->thread_estimates[i];
+        } else {
+            thread_estimated = tracker->total_combinations / num_threads; // Fallback
+        }
         double elapsed_seconds = difftime(time(NULL), thread_start_time);
         
         // Calculate thread ETA
