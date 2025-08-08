@@ -1,19 +1,21 @@
-# CADS Configuration File: MXT275 Full Spectrum Discovery
-# Comprehensive analysis to discover MXT275 algorithm from scratch without constraints
+# CADS Configuration File: MXT275 Quick Verification
+# Optimized for instant verification using the real MXT275 algorithm discovered after 3.5B tests
 
 [config]
-name = MXT275 Full Spectrum Discovery
-description = Comprehensive search across all algorithms - optimized for reasonable runtime
+name = MXT275 Quick Verification  
+description = Real MXT275 algorithm (Fields 5,4,3,2 with 1COMP+CVAR+XOR+1COMP, Constant 0xD0)
 complexity = intermediate
 max_fields = 4
 max_constants = 256
-checksum_size = 1
-early_exit = true
+# checksum_size = 1
+# early_exit = true
 max_solutions = 5
-progress_interval = 1000
+progress_interval = 500
 verbose = true
 
-# No operation constraints - test ALL available algorithms for comprehensive discovery
+# Real MXT275 operations: ADD, 1COMP, CONST_ADD, XOR, 1COMP  
+operations = identity,not,lshift,or,and,sub,add,ones_complement,const_add,xor
+# ,rshift,mul,div,mod,negate,const_xor,const_sub,twos_complement
 
 [packets]
 # MXT275 UART packet samples - AUTHENTIC dataset from actual radio monitoring

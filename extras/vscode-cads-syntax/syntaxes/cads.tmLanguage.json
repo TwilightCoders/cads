@@ -69,7 +69,7 @@
           }
         },
         {
-          "match": "^\\s*(max_fields|max_constants|max_solutions|progress_interval)\\s*(=)\\s*(\\d+)\\s*$",
+          "match": "^\\s*(max_fields|max_constants|max_solutions|progress_interval|checksum_size)\\s*(=)\\s*(\\d+)\\s*$",
           "captures": {
             "1": {
               "name": "variable.other.property.cads"
@@ -109,7 +109,7 @@
               "patterns": [
                 {
                   "name": "entity.name.function.operation.cads",
-                  "match": "\\b(identity|add|xor|ones_complement|const_add|const_sub|const_xor|sub|mul|div|mod)\\b"
+                  "match": "\\b(identity|add|xor|ones_complement|const_add|const_sub|const_xor|sub|mul|div|mod|not|lshift|rshift|or|and|negate|twos_complement|rotleft|rotright|crc8_ccitt|crc8_dallas|crc8_sae|fletcher8|swap_nibbles|reverse_bits|lookup_table|poly_crc|checksum_variant)\\b"
                 },
                 {
                   "name": "punctuation.separator.comma.cads",
