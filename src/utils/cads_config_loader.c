@@ -161,20 +161,11 @@ config_t* load_cads_config(const char* filename) {
         return NULL;
     }
     
-    config_t* config = calloc(1, sizeof(config_t));
+    config_t* config = create_default_cads_config();
     if (!config) {
         fclose(file);
         return NULL;
     }
-    
-    config->complexity = COMPLEXITY_INTERMEDIATE;
-    config->max_fields = 4;
-    config->max_constants = 128;
-    config->early_exit = false;
-    config->max_solutions = 0;
-    config->progress_interval = 250;
-    config->verbose = false;
-    config->threads = 1;
     
     char line[512];
     bool found_config = false;

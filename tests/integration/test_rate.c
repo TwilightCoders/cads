@@ -33,10 +33,10 @@ int main() {
     set_progress_interval(&config, 250);
     
     search_results_t* results = create_search_results(10);
-    progress_tracker_t tracker;
+    config.threads = 1;
     
     printf("🏁 Starting rate test...\n");
-    bool success = execute_checksum_search(&config, results, &tracker);
+    bool success = execute_weighted_checksum_search(&config, results, NULL);
     
     printf("\n📊 Rate Test Results:\n");
     printf("Success: %s\n", success ? "✅" : "❌");

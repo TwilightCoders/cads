@@ -4,6 +4,7 @@
 #include "../utils/field_combiner.h"
 #include "../utils/search_display.h"
 #include "thread_partitioner.h"
+#include "../../include/sequence_evaluator.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -97,6 +98,14 @@ void* progress_monitor_thread(void* arg) {
             break;
         }
         
+        // Check if search is complete (all tests done)
+        if (current_tests >= ctx->tracker->total_combinations) {
+            pthread_mutex_lock(ctx->progress_mutex);
+            *(ctx->search_interrupted) = true;
+            pthread_mutex_unlock(ctx->progress_mutex);
+            break;
+        }
+        
         // Update progress tracker
         update_progress(ctx->tracker, current_tests, current_solutions);
         if (should_display_progress(ctx->tracker)) {
@@ -170,68 +179,20 @@ bool test_constrained_operation_sequence(const packet_dataset_t* dataset,
     if (current_depth >= max_depth) {
         (*tests_performed)++;
         
-        // Test this operation sequence against all packets (same logic as original)
-        bool all_match = true;
-        for (size_t packet_idx = 0; packet_idx < dataset->count; packet_idx++) {
-            const test_packet_t* packet = &dataset->packets[packet_idx];
-            
-            if (packet->checksum_size != config->checksum_size) {
-                all_match = false;
-                break;
-            }
-            
-            // Check if packet has enough fields
-            for (int f = 0; f < field_count; f++) {
-                if (field_permutation[f] >= packet->packet_length) {
-                    all_match = false;
-                    break;
-                }
-            }
-            if (!all_match) break;
-            
-            // Apply operation sequence correctly for patterns like MXT275
-            // Start with first field value
-            uint64_t calculated = extract_packet_field_value(packet->packet_data, 
-                                                           packet->packet_length,
-                                                           field_permutation[0], 
-                                                           config->checksum_size);
-            
-            // Apply operations step by step
-            int field_idx = 1; // Next field to consume
-            for (int op_idx = 0; op_idx < max_depth; op_idx++) {
-                operation_t op = operation_sequence[op_idx];
-                
-                if (op == OP_ONES_COMPLEMENT) {
-                    // Unary operation - no field needed
-                    calculated = execute_algorithm(op, calculated, 0, 0);
-                } else if (op == OP_CONST_ADD) {
-                    // Use constant
-                    calculated = execute_algorithm(op, calculated, 0, constant);
-                } else if (field_idx < field_count) {
-                    // Binary operation - consume next field
-                    uint64_t next_val = extract_packet_field_value(packet->packet_data,
-                                                                 packet->packet_length,
-                                                                 field_permutation[field_idx],
-                                                                 config->checksum_size);
-                    calculated = execute_algorithm(op, calculated, next_val, 0);
-                    field_idx++;
-                } else {
-                    // No more fields available for binary operation - skip
-                    break;
-                }
-            }
-            
-            // Mask and compare
-            calculated = mask_checksum_to_size(calculated, config->checksum_size);
-            uint64_t expected = mask_checksum_to_size(packet->expected_checksum, config->checksum_size);
-            
-            if (calculated != expected) {
-                all_match = false;
-                break;
-            }
+        // Debug: Log when we test the known working solution pattern
+        if (max_depth == 4 && field_count == 4 && constant == 0x18 &&
+            field_permutation[0] == 3 && field_permutation[1] == 2 && field_permutation[2] == 4 && field_permutation[3] == 5 &&
+            operation_sequence[0] == OP_CONST_ADD && operation_sequence[1] == OP_CONST_ADD && 
+            operation_sequence[2] == OP_XOR && operation_sequence[3] == OP_XOR) {
+            printf("DEBUG: TESTING KNOWN SOLUTION PATTERN!\n");
+            printf("Fields: [%d,%d,%d,%d], Ops: [%d,%d,%d,%d], Constant: 0x%02X\n",
+                   field_permutation[0], field_permutation[1], field_permutation[2], field_permutation[3],
+                   (int)operation_sequence[0], (int)operation_sequence[1], (int)operation_sequence[2], (int)operation_sequence[3], constant);
         }
         
-        if (all_match) {
+        
+    bool all_match = evaluate_operation_sequence(dataset, config, field_permutation, field_count, operation_sequence, max_depth, constant);
+    if (all_match) {
             // Found a solution!
             checksum_solution_t solution = {0};
             for (int f = 0; f < field_count; f++) {
@@ -379,17 +340,16 @@ void* weighted_worker_thread(void* arg) {
                         operation_t test_sequence[CADS_MAX_FIELDS];
                         test_sequence[0] = start_operation;
                         
-                        size_t solutions_before = ctx->results->solution_count;
                         bool found = test_starting_operation_sequences(ctx->dataset, ctx->config,
                                                                      permutations[perm_idx], field_count,
                                                                      ctx->algorithms, ctx->algorithm_count,
                                                                      test_sequence, start_operation, max_operation_depth,
                                                                      constant, ctx->results, &local_tests);
                         
-                        // Check if this thread found new solutions and increment its counter
-                        if (found && ctx->results->solution_count > solutions_before) {
+                        // Track solutions found by this thread
+                        if (found) {
                             pthread_mutex_lock(&ctx->thread_progress->mutex);
-                            ctx->thread_progress->solutions_found += (ctx->results->solution_count - solutions_before);
+                            ctx->thread_progress->solutions_found++;
                             pthread_mutex_unlock(&ctx->thread_progress->mutex);
                         }
                         
@@ -464,45 +424,27 @@ void* weighted_worker_thread(void* arg) {
 // Weighted checksum search - handles both single and multi-threaded execution
 bool execute_weighted_checksum_search(const config_t* config, 
                                      search_results_t* results,
-                                     const hardware_benchmark_result_t* benchmark) {
+                                     const hardware_benchmark_result_t* benchmark __attribute__((unused))) {
     
     if (!config || !results || !config->dataset || config->dataset->count == 0) {
         return false;
-    }
-    
-    // Normalize thread count: always use at least 1 thread  
-    int actual_threads;
-    if (config->threads > 1) {
-        actual_threads = config->threads;
-    } else if (config->threads == 0) {
-        actual_threads = sysconf(_SC_NPROCESSORS_ONLN); // Auto-detect
-    } else {
-        actual_threads = 1; // Single-threaded mode (threads == 1)
-    }
-    
-    // Single-threaded still uses the optimized weighted algorithm, just with 1 thread
-    if (actual_threads == 1 && config->verbose) {
-        printf("🔄 Single-threaded execution (optimized)\n");
-    }
-    
-    // Multi-threaded weighted execution
-    if (config->verbose && actual_threads > 1) {
-        printf("🧵 Weighted multi-threaded execution: %d threads\n", actual_threads);
     }
     
     // Initialize algorithm registry
     if (!initialize_algorithm_registry()) {
         return false;
     }
+
+    // Build field cache (best-effort; ignore failure) for faster extraction on large datasets
+    build_field_cache(config->dataset, config->checksum_size, config->max_fields);
     
-    // Build operations array
+    // Build operations array first to know how many operations we have
     int algorithm_count;
     algorithm_registry_entry_t* algorithms = malloc(32 * sizeof(algorithm_registry_entry_t));
     if (!algorithms) {
         cleanup_algorithm_registry();
         return false;
     }
-    
     
     if (config->custom_operation_count > 0 && config->custom_operations) {
         algorithm_count = config->custom_operation_count;
@@ -521,19 +463,36 @@ bool execute_weighted_checksum_search(const config_t* config,
         memcpy(algorithms, complexity_algorithms, algorithm_count * sizeof(algorithm_registry_entry_t));
     }
     
-    // Create weighted partitions
-    partitioning_result_t* partitions = create_weighted_partitions(algorithms, algorithm_count, actual_threads);
-    if (!partitions) {
-        free(algorithms);
-        cleanup_algorithm_registry();
-        return false;
+    // Normalize thread count: cap at operation count and use at least 1 thread  
+    int actual_threads;
+    if (config->threads > 1) {
+        actual_threads = config->threads;
+    } else if (config->threads == 0) {
+        actual_threads = sysconf(_SC_NPROCESSORS_ONLN); // Auto-detect
+    } else {
+        actual_threads = 1; // Single-threaded mode (threads == 1)
     }
     
-    if (config->verbose) {
-        print_partition_summary(partitions);
+    // Cap threads at available operations - no point having more threads than operations
+    if (actual_threads > algorithm_count) {
+        actual_threads = algorithm_count;
+        if (config->verbose) {
+            printf("🔧 Capping threads to %d (number of operations available)\n", actual_threads);
+        }
     }
     
-    // Calculate estimated work
+    // Single-threaded still uses the optimized weighted algorithm, just with 1 thread
+    if (actual_threads == 1 && config->verbose) {
+        printf("🔄 Single-threaded execution (optimized)\n");
+    }
+    
+    // Multi-threaded weighted execution
+    if (config->verbose && actual_threads > 1) {
+        printf("🧵 Weighted multi-threaded execution: %d threads\n", actual_threads);
+    }
+    
+    
+    // Calculate estimated work first (needed for workload balancing)
     size_t min_packet_length = SIZE_MAX;
     for (size_t i = 0; i < config->dataset->count; i++) {
         if (config->dataset->packets[i].packet_length < min_packet_length) {
@@ -544,6 +503,20 @@ bool execute_weighted_checksum_search(const config_t* config,
     uint64_t permutations = 1;
     for (int i = 0; i < config->max_fields && i < (int)min_packet_length; i++) {
         permutations *= (min_packet_length - i);
+    }
+    
+    // Create workload-balanced partitions that consider both search space and computational weight
+    partitioning_result_t* partitions = create_workload_balanced_partitions(algorithms, algorithm_count, actual_threads,
+                                                                           config->max_fields, config->max_constants, permutations);
+    if (!partitions) {
+        free(algorithms);
+        cleanup_algorithm_registry();
+        return false;
+    }
+    
+    if (config->verbose) {
+        print_partition_summary_with_workload(partitions, algorithms, algorithm_count,
+                                             config->max_fields, config->max_constants, permutations);
     }
     
     // Calculate operation sequences for ALL complexity levels (same as single-threaded)
@@ -732,6 +705,8 @@ bool execute_weighted_checksum_search(const config_t* config,
     
     // Print any solutions found (now that all threads have stopped)
     if (results->solution_count > 0) {
+    // Deterministic ordering
+    sort_search_solutions(results);
         print_found_solutions(results, algorithms, algorithm_count);
     }
     
@@ -751,6 +726,7 @@ bool execute_weighted_checksum_search(const config_t* config,
     pthread_mutex_destroy(&progress_mutex);
     free(algorithms);
     cleanup_algorithm_registry();
+    clear_field_cache();
     
     return true;
 }

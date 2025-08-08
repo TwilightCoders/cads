@@ -69,11 +69,12 @@ int main() {
         set_progress_interval(&config, 5000);  // Minimal progress updates
         
         search_results_t* results = create_search_results(10);
-        progress_tracker_t tracker;
+    // Single-threaded for fair perf isolation (engine unifies paths)
+    config.threads = 1;
         
-        // Measure just the core search
-        double start_time = get_time_ms();
-        bool success = execute_checksum_search(&config, results, &tracker);
+    // Measure just the core search
+    double start_time = get_time_ms();
+    bool success = execute_weighted_checksum_search(&config, results, NULL);
         double end_time = get_time_ms();
         
         double elapsed = end_time - start_time;
@@ -106,10 +107,10 @@ int main() {
     set_progress_interval(&peak_config, 10000);  // Very minimal updates
     
     search_results_t* peak_results = create_search_results(10);
-    progress_tracker_t peak_tracker;
+    peak_config.threads = 1;
     
     double peak_start = get_time_ms();
-    bool peak_success = execute_checksum_search(&peak_config, peak_results, &peak_tracker);
+    bool peak_success = execute_weighted_checksum_search(&peak_config, peak_results, NULL);
     double peak_end = get_time_ms();
     
     double peak_elapsed = peak_end - peak_start;

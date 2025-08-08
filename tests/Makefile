@@ -14,21 +14,23 @@ BUILD_DIR = ../build/tests
 
 # Source files
 CORE_SOURCES = $(SRC_DIR)/src/core/packet_data.c \
-               $(SRC_DIR)/src/core/algorithm_registry.c \
-               $(SRC_DIR)/src/core/checksum_engine_recursive.c \
-               $(SRC_DIR)/src/core/operation_tester.c \
-               $(SRC_DIR)/src/core/progress_tracker.c \
-               $(SRC_DIR)/src/algorithms/basic_ops.c \
-               $(SRC_DIR)/src/algorithms/intermediate_ops.c \
-               $(SRC_DIR)/src/algorithms/advanced_ops.c \
-               $(SRC_DIR)/src/utils/field_combiner.c \
-               $(SRC_DIR)/src/utils/config.c
+			   $(SRC_DIR)/src/core/algorithm_registry.c \
+			   $(SRC_DIR)/src/core/checksum_engine_threaded.c \
+			   $(SRC_DIR)/src/core/checksum_engine_shared.c \
+			   $(SRC_DIR)/src/core/operation_tester.c \
+			   $(SRC_DIR)/src/core/progress_tracker.c \
+		   $(SRC_DIR)/src/core/sequence_evaluator.c \
+			   $(SRC_DIR)/src/algorithms/basic_ops.c \
+			   $(SRC_DIR)/src/algorithms/intermediate_ops.c \
+			   $(SRC_DIR)/src/algorithms/advanced_ops.c \
+			   $(SRC_DIR)/src/utils/field_combiner.c \
+			   $(SRC_DIR)/src/utils/config.c
 
 UNITY_SOURCES = $(TEST_DIR)/unity.c
 
 # Test executables (with build directory)
 UNIT_TESTS = $(BUILD_DIR)/test_algorithm_operations $(BUILD_DIR)/test_packet_data $(BUILD_DIR)/test_field_combiner
-INTEGRATION_TESTS = $(BUILD_DIR)/test_forj_algorithm $(BUILD_DIR)/test_search_engine $(BUILD_DIR)/test_packet_discovery $(BUILD_DIR)/test_performance_profile $(BUILD_DIR)/test_rate_calculation $(BUILD_DIR)/benchmark_core
+INTEGRATION_TESTS = $(BUILD_DIR)/test_forj_algorithm $(BUILD_DIR)/test_search_engine $(BUILD_DIR)/test_packet_discovery $(BUILD_DIR)/test_performance_profile $(BUILD_DIR)/test_rate_calculation $(BUILD_DIR)/benchmark_core $(BUILD_DIR)/test_thread_equivalence
 
 ALL_TESTS = $(UNIT_TESTS) $(INTEGRATION_TESTS)
 
@@ -66,6 +68,9 @@ $(BUILD_DIR)/test_rate_calculation: $(INTEGRATION_DIR)/test_rate.c $(UNITY_SOURC
 	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
 
 $(BUILD_DIR)/benchmark_core: $(INTEGRATION_DIR)/benchmark_core.c $(UNITY_SOURCES) $(CORE_SOURCES) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
+
+$(BUILD_DIR)/test_thread_equivalence: $(INTEGRATION_DIR)/test_thread_equivalence.c $(UNITY_SOURCES) $(CORE_SOURCES) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $< $(UNITY_SOURCES) $(CORE_SOURCES) $(LDFLAGS)
 
 # Run all tests

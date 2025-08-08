@@ -6,6 +6,7 @@
 #include "../../include/algorithm_registry.h"
 #include "../utils/search_display.h"
 #include "../utils/hardware_benchmark.h"
+#include "../utils/config.h"
 
 void print_usage(const char* program_name) {
     printf("CADS - Checksum Algorithm Discovery System v1-beta\n");
@@ -59,6 +60,32 @@ int main(int argc, char* argv[]) {
             return 0;
         }
         return 1;
+    }
+    
+    // Validate and fix configuration
+    if (!validate_search_config(config)) {
+        bool has_errors = false;
+        
+        // Handle checksum_size - warn and default to 1
+        if (config->checksum_size < 1) {
+            fprintf(stderr, "⚠️  Warning: checksum_size must be >= 1 (got %zu), defaulting to 1\n", config->checksum_size);
+            config->checksum_size = 1;
+        }
+        
+        // Handle other errors that should still fail
+        if (config->max_fields < 1 || config->max_fields > CADS_MAX_FIELDS) {
+            fprintf(stderr, "❌ Error: max_fields must be between 1 and %d (got %d)\n", CADS_MAX_FIELDS, config->max_fields);
+            has_errors = true;
+        }
+        if (config->max_constants < 1) {
+            fprintf(stderr, "❌ Error: max_constants must be >= 1 (got %d)\n", config->max_constants);
+            has_errors = true;
+        }
+        
+        if (has_errors) {
+            free_cads_config(config);
+            return 1;
+        }
     }
     
     // Show header only in verbose mode

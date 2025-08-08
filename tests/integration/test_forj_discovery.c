@@ -38,8 +38,9 @@ void test_forj_algorithm_discovery(void) {
     // Create progress tracker
     progress_tracker_t tracker = {0};
     
+    config.threads = 1; // single-threaded unified search
     // Execute search - this should discover the Forj algorithm
-    bool search_success = execute_checksum_search(&config, results, &tracker);
+    bool search_success = execute_weighted_checksum_search(&config, results, NULL);
     TEST_ASSERT(search_success);
     
     // Verify we found at least one solution
@@ -92,8 +93,9 @@ void test_forj_discovery_with_custom_operations(void) {
     // Create progress tracker
     progress_tracker_t tracker = {0};
     
+    config.threads = 1;
     // Execute search with custom operations
-    bool search_success = execute_checksum_search(&config, results, &tracker);
+    bool search_success = execute_weighted_checksum_search(&config, results, NULL);
     TEST_ASSERT(search_success);
     
     // Should find solution faster with focused operation set

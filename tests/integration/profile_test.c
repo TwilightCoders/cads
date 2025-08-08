@@ -46,12 +46,12 @@ int main() {
     set_progress_interval(&config, 1000);  // Less frequent updates for cleaner profiling
     
     search_results_t* results = create_search_results(10);
-    progress_tracker_t tracker;
+    config.threads = 1; // single-threaded profile baseline
     
     double start_time = get_time_ms();
     
     printf("🏁 Starting search...\n");
-    bool success = execute_checksum_search(&config, results, &tracker);
+    bool success = execute_weighted_checksum_search(&config, results, NULL);
     
     double end_time = get_time_ms();
     double elapsed = end_time - start_time;

@@ -65,8 +65,9 @@ void test_mxt275_algorithm_discovery(void) {
     // Create progress tracker
     progress_tracker_t tracker = {0};
     
+    config.threads = 1;
     // Execute search - should discover the MXT275 algorithm
-    bool search_success = execute_checksum_search(&config, results, &tracker);
+    bool search_success = execute_weighted_checksum_search(&config, results, NULL);
     TEST_ASSERT(search_success);
     
     // Verify we found at least one solution
@@ -125,8 +126,9 @@ void test_targeted_mxt275_discovery(void) {
     // Create progress tracker
     progress_tracker_t tracker = {0};
     
+    config.threads = 1;
     // Execute targeted search
-    bool search_success = execute_checksum_search(&config, results, &tracker);
+    bool search_success = execute_weighted_checksum_search(&config, results, NULL);
     TEST_ASSERT(search_success);
     
     // Should find solution faster with targeted operation set
@@ -207,7 +209,8 @@ void test_dataset_comparison(void) {
     progress_tracker_t tracker1 = {0};
     
     printf("🎯 Testing search with GMRS dataset...\n");
-    gmrs_success = execute_checksum_search(&gmrs_config, gmrs_results, &tracker1);
+    gmrs_config.threads = 1;
+    gmrs_success = execute_weighted_checksum_search(&gmrs_config, gmrs_results, NULL);
     printf("📈 GMRS search result: %s, solutions found: %zu\n", 
            gmrs_success ? "SUCCESS" : "FAILED", gmrs_results->solution_count);
     
@@ -219,7 +222,8 @@ void test_dataset_comparison(void) {
     progress_tracker_t tracker2 = {0};
     
     printf("🎯 Testing search with JSON dataset...\n");
-    bool json_success = execute_checksum_search(&json_config, json_results, &tracker2);
+    json_config.threads = 1;
+    bool json_success = execute_weighted_checksum_search(&json_config, json_results, NULL);
     printf("📈 JSON search result: %s, solutions found: %zu\n", 
            json_success ? "SUCCESS" : "FAILED", json_results->solution_count);
     

@@ -21,28 +21,20 @@ uint64_t extract_packet_field_value(const uint8_t* packet_data, size_t packet_le
                                    uint8_t field_index, size_t checksum_size);
 uint64_t mask_checksum_to_size(uint64_t checksum, size_t checksum_size);
 
-// Algorithm testing
-bool test_algorithm_combination(const uint8_t* field_indices, uint8_t field_count,
-                               const operation_t* operations, uint8_t operation_count,
-                               uint64_t constant, size_t checksum_size,
-                               const packet_dataset_t* dataset,
-                               checksum_solution_t* solution);
+// (Deprecated/removed legacy recursive search API execute_checksum_search has been unified into the
+// weighted engine below; use execute_weighted_checksum_search for both single and multi-threaded execution.)
 
-// Solution validation
-bool validate_solution(const checksum_solution_t* solution, const packet_dataset_t* dataset);
-
-// Search space estimation
-uint64_t estimate_search_space(const packet_dataset_t* dataset, const config_t* config);
-
-// Main search functions
-bool execute_checksum_search(const config_t* config,
-                            search_results_t* results,
-                            progress_tracker_t* tracker);
-
-// Weighted threaded search with operation partitioning (handles both single and multi-threaded)
+// Unified weighted search (set config->threads = 1 for single-threaded deterministic execution)
 bool execute_weighted_checksum_search(const config_t* config, 
                                      search_results_t* results,
                                      const hardware_benchmark_result_t* benchmark);
+
+// Solution ordering
+void sort_search_solutions(search_results_t* results);
+
+// Field cache lifecycle (optional performance optimization)
+bool build_field_cache(const packet_dataset_t* dataset, size_t checksum_size, size_t max_fields);
+void clear_field_cache(void);
 
 // Recursive operation testing
 bool test_operation_sequence(const packet_dataset_t* dataset, 

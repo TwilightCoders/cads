@@ -3,7 +3,7 @@
 #include "../unity.h"
 #include "../../include/checksum_engine.h"
 #include "../../src/core/packet_data.h"
-#include "../../src/core/progress_tracker.h"
+#include "../../src/core/progress_tracker.h" // retained for potential future assertions
 #include "../../src/utils/config.h"
 
 void setUp(void) {
@@ -34,10 +34,11 @@ void test_custom_operation_selection(void) {
     search_results_t* results = create_search_results(10);
     TEST_ASSERT_NOT_NULL(results);
     
-    progress_tracker_t tracker;
+    // Force single-threaded unified engine
+    config.threads = 1;
     
-    // Execute search - should find at least one solution quickly
-    bool success = execute_checksum_search(&config, results, &tracker);
+    // Execute unified weighted search - should find at least one solution quickly
+    bool success = execute_weighted_checksum_search(&config, results, NULL);
     TEST_ASSERT(success);
     TEST_ASSERT(results->solution_count > 0);
     TEST_ASSERT(results->tests_performed > 0);
@@ -67,10 +68,9 @@ void test_standard_complexity_search(void) {
     search_results_t* results = create_search_results(10);
     TEST_ASSERT_NOT_NULL(results);
     
-    progress_tracker_t tracker;
-    
-    // Execute search - should work with basic operations
-    bool success = execute_checksum_search(&config, results, &tracker);
+    config.threads = 1;
+    // Execute unified weighted search - should work with basic operations
+    bool success = execute_weighted_checksum_search(&config, results, NULL);
     TEST_ASSERT(success);
     
     // May or may not find solutions with basic ops, but should not crash
