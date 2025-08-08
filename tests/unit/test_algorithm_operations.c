@@ -86,6 +86,26 @@ void test_operation_metadata(void) {
     tearDown();
 }
 
+// Advanced operations wiring test
+void test_advanced_operations_wired(void) {
+    setUp();
+    // Just ensure they execute and produce deterministic transformations for known inputs
+    uint8_t swapn = (uint8_t)execute_algorithm(OP_SWAP_NIBBLES, 0xAB, 0, 0);
+    TEST_ASSERT_EQUAL_HEX8(0xBA, swapn);
+    uint8_t revb = (uint8_t)execute_algorithm(OP_REVERSE_BITS, 0x96, 0, 0); // 0x96 -> 0x69
+    TEST_ASSERT_EQUAL_HEX8(0x69, revb);
+    // CRC variants: ensure non-zero and differ between types
+    uint8_t crc_ccitt = (uint8_t)execute_algorithm(OP_CRC8_CCITT, 0xAA, 0x55, 0);
+    uint8_t crc_dallas = (uint8_t)execute_algorithm(OP_CRC8_DALLAS, 0xAA, 0x55, 0);
+    TEST_ASSERT(crc_ccitt != 0x00);
+    TEST_ASSERT(crc_ccitt != crc_dallas);
+    uint8_t rotl = (uint8_t)execute_algorithm(OP_ROTLEFT, 0x81, 0x01, 0); // 1000 0001 rotl1 (8-bit) -> 0000 0011 (0x03)
+    TEST_ASSERT_EQUAL_HEX8(0x03, rotl);
+    uint8_t rotr = (uint8_t)execute_algorithm(OP_ROTRIGHT, 0x81, 0x01, 0); // rotr1 -> 0xC0
+    TEST_ASSERT_EQUAL_HEX8(0xC0, rotr);
+    tearDown();
+}
+
 // Main test runner
 int main(void) {
     TEST_SETUP();
@@ -98,6 +118,23 @@ int main(void) {
     RUN_TEST(test_algorithm_registry_initialization);
     RUN_TEST(test_invalid_operation);
     RUN_TEST(test_operation_metadata);
+    RUN_TEST(test_advanced_operations_wired);
+
+    // Advanced operation smoke tests (ensure function pointers wired)
+    setUp();
+    uint64_t rotl = execute_algorithm(OP_ROTLEFT, 0x12, 0x01, 0);
+    (void)rotl; // Accept any non-crash result
+    uint64_t rotr = execute_algorithm(OP_ROTRIGHT, 0x12, 0x01, 0);
+    (void)rotr;
+    uint64_t crc = execute_algorithm(OP_CRC8_CCITT, 0xAA, 0x55, 0);
+    (void)crc;
+    uint64_t fletch = execute_algorithm(OP_FLETCHER8, 0x11, 0x22, 0);
+    (void)fletch;
+    uint64_t swapn = execute_algorithm(OP_SWAP_NIBBLES, 0xAB, 0, 0);
+    TEST_ASSERT_EQUAL_HEX8(0xBA, (uint8_t)swapn);
+    uint64_t revb = execute_algorithm(OP_REVERSE_BITS, 0x96, 0, 0); // 0x96 = 1001 0110 -> 0110 1001 = 0x69
+    TEST_ASSERT_EQUAL_HEX8(0x69, (uint8_t)revb);
+    tearDown();
     
     return TEST_SUMMARY();
 }

@@ -26,6 +26,18 @@ uint64_t intermediate_const_xor_wrapper(uint64_t a, uint64_t b, uint64_t constan
 uint64_t intermediate_const_sub_wrapper(uint64_t a, uint64_t b, uint64_t constant);
 uint64_t intermediate_ones_complement_wrapper(uint64_t a, uint64_t b, uint64_t constant);
 uint64_t intermediate_twos_complement_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+// Advanced operation forward declarations (wrappers)
+uint64_t advanced_rotleft_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_rotright_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_crc8_ccitt_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_crc8_dallas_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_crc8_sae_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_fletcher8_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_swap_nibbles_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_reverse_bits_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_lookup_table_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_poly_crc_wrapper(uint64_t a, uint64_t b, uint64_t constant);
+uint64_t advanced_checksum_variant_wrapper(uint64_t a, uint64_t b, uint64_t constant);
 
 // Global algorithm registry
 static algorithm_registry_entry_t* g_algorithm_registry = NULL;
@@ -55,8 +67,8 @@ static const algorithm_registry_entry_t master_registry[] = {
     {OP_LSHIFT, COMPLEXITY_INTERMEDIATE, "LSH", "Left shift", false, intermediate_lshift_wrapper, 1},
     {OP_RSHIFT, COMPLEXITY_INTERMEDIATE, "RSH", "Right shift", false, intermediate_rshift_wrapper, 1},
     {OP_MUL, COMPLEXITY_INTERMEDIATE, "MUL", "Multiplication", false, intermediate_mul_wrapper, 3},
-    {OP_DIV, COMPLEXITY_INTERMEDIATE, "DIV", "Division", false, intermediate_div_wrapper, 30},
-    {OP_MOD, COMPLEXITY_INTERMEDIATE, "MOD", "Modulo", false, intermediate_mod_wrapper, 30},
+    {OP_DIV, COMPLEXITY_INTERMEDIATE, "DIV", "Division", false, intermediate_div_wrapper, 2},
+    {OP_MOD, COMPLEXITY_INTERMEDIATE, "MOD", "Modulo", false, intermediate_mod_wrapper, 2},
     {OP_NEGATE, COMPLEXITY_INTERMEDIATE, "NEG", "Two's complement negation", false, intermediate_negate_wrapper, 1},
     {OP_CONST_ADD, COMPLEXITY_INTERMEDIATE, "C+", "Add constant", true, intermediate_const_add_wrapper, 1},
     {OP_CONST_XOR, COMPLEXITY_INTERMEDIATE, "C^", "XOR with constant", true, intermediate_const_xor_wrapper, 1},
@@ -65,17 +77,17 @@ static const algorithm_registry_entry_t master_registry[] = {
     {OP_TWOS_COMPLEMENT, COMPLEXITY_INTERMEDIATE, "2COMP", "Two's complement sum", false, intermediate_twos_complement_wrapper, 2},
     
     // ADVANCED algorithms (11 total) - 2-25 cycles
-    {OP_ROTLEFT, COMPLEXITY_ADVANCED, "ROTL", "Rotate left", false, NULL, 2},
-    {OP_ROTRIGHT, COMPLEXITY_ADVANCED, "ROTR", "Rotate right", false, NULL, 2},
-    {OP_CRC8_CCITT, COMPLEXITY_ADVANCED, "CRC8C", "CRC-8 CCITT", false, NULL, 8},
-    {OP_CRC8_DALLAS, COMPLEXITY_ADVANCED, "CRC8D", "CRC-8 Dallas/Maxim", false, NULL, 8},
-    {OP_CRC8_SAE, COMPLEXITY_ADVANCED, "CRC8S", "CRC-8 SAE J1850", false, NULL, 8},
-    {OP_FLETCHER8, COMPLEXITY_ADVANCED, "FLETCH", "Fletcher-8 checksum", false, NULL, 6},
-    {OP_SWAP_NIBBLES, COMPLEXITY_ADVANCED, "SWAP", "Swap nibbles", false, NULL, 2},
-    {OP_REVERSE_BITS, COMPLEXITY_ADVANCED, "REVB", "Reverse bits", false, NULL, 8},
-    {OP_LOOKUP_TABLE, COMPLEXITY_ADVANCED, "LUT", "Lookup table", false, NULL, 3},
-    {OP_POLY_CRC, COMPLEXITY_ADVANCED, "PCRC", "Polynomial CRC", true, NULL, 20},
-    {OP_CHECKSUM_VARIANT, COMPLEXITY_ADVANCED, "CVAR", "Checksum variant", true, NULL, 5}
+    {OP_ROTLEFT, COMPLEXITY_ADVANCED, "ROTL", "Rotate left", false, advanced_rotleft_wrapper, 2},
+    {OP_ROTRIGHT, COMPLEXITY_ADVANCED, "ROTR", "Rotate right", false, advanced_rotright_wrapper, 2},
+    {OP_CRC8_CCITT, COMPLEXITY_ADVANCED, "CRC8C", "CRC-8 CCITT", false, advanced_crc8_ccitt_wrapper, 8},
+    {OP_CRC8_DALLAS, COMPLEXITY_ADVANCED, "CRC8D", "CRC-8 Dallas/Maxim", false, advanced_crc8_dallas_wrapper, 8},
+    {OP_CRC8_SAE, COMPLEXITY_ADVANCED, "CRC8S", "CRC-8 SAE J1850", false, advanced_crc8_sae_wrapper, 8},
+    {OP_FLETCHER8, COMPLEXITY_ADVANCED, "FLETCH", "Fletcher-8 checksum", false, advanced_fletcher8_wrapper, 6},
+    {OP_SWAP_NIBBLES, COMPLEXITY_ADVANCED, "SWAP", "Swap nibbles", false, advanced_swap_nibbles_wrapper, 2},
+    {OP_REVERSE_BITS, COMPLEXITY_ADVANCED, "REVB", "Reverse bits", false, advanced_reverse_bits_wrapper, 8},
+    {OP_LOOKUP_TABLE, COMPLEXITY_ADVANCED, "LUT", "Lookup table", false, advanced_lookup_table_wrapper, 3},
+    {OP_POLY_CRC, COMPLEXITY_ADVANCED, "PCRC", "Polynomial CRC", true, advanced_poly_crc_wrapper, 20},
+    {OP_CHECKSUM_VARIANT, COMPLEXITY_ADVANCED, "CVAR", "Checksum variant", true, advanced_checksum_variant_wrapper, 5}
 };
 
 // Wrapper functions for basic operations
@@ -150,6 +162,51 @@ uint64_t intermediate_ones_complement_wrapper(uint64_t a, uint64_t b, uint64_t c
 
 uint64_t intermediate_twos_complement_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
     return intermediate_twos_complement(a, b, constant);
+}
+
+// Wrapper functions for advanced operations
+uint64_t advanced_rotleft_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_rotleft(a, b, constant);
+}
+
+uint64_t advanced_rotright_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_rotright(a, b, constant);
+}
+
+uint64_t advanced_crc8_ccitt_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_crc8_ccitt(a, b, constant);
+}
+
+uint64_t advanced_crc8_dallas_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_crc8_dallas(a, b, constant);
+}
+
+uint64_t advanced_crc8_sae_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_crc8_sae(a, b, constant);
+}
+
+uint64_t advanced_fletcher8_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_fletcher8(a, b, constant);
+}
+
+uint64_t advanced_swap_nibbles_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_swap_nibbles(a, b, constant);
+}
+
+uint64_t advanced_reverse_bits_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_reverse_bits(a, b, constant);
+}
+
+uint64_t advanced_lookup_table_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_lookup_table(a, b, constant);
+}
+
+uint64_t advanced_poly_crc_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_poly_crc(a, b, constant);
+}
+
+uint64_t advanced_checksum_variant_wrapper(uint64_t a, uint64_t b, uint64_t constant) {
+    return advanced_checksum_variant(a, b, constant);
 }
 
 bool initialize_algorithm_registry(void) {
