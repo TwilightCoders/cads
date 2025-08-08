@@ -220,6 +220,7 @@ static void build_progress_bar(const char* label, uint64_t completed, uint64_t t
                               double elapsed_seconds, const char* eta_str, int solutions, 
                               const char* color_code, int bar_width, bool indent, 
                               progress_token_flags_t show_flags) {
+    
     // Create progress bar
     double progress_pct = 0.0;
     if (total > 0) {
@@ -237,7 +238,8 @@ static void build_progress_bar(const char* label, uint64_t completed, uint64_t t
     (void)format_with_units(elapsed_seconds, elapsed_str, sizeof(elapsed_str), format_time_units, ARRAY_SIZE(format_time_units));
     
     // Print the progress bar (with or without indentation)
-    const char* indent_str = indent ? "       " : "";  // 5 spaces for thread indentation
+    const char* indent_str = indent ? "      " : "";  // 6 spaces for thread indentation
+    
     printf("%s%s%s:%s [", indent_str, color_code, label, COLOR_RESET);
     for (int i = 0; i < bar_width; i++) {
         if (i < filled_bars) {
@@ -250,18 +252,18 @@ static void build_progress_bar(const char* label, uint64_t completed, uint64_t t
     // Print progress stats with fixed-width formatting for tabular alignment
     // Max widths: number=6, percentage=8, rate=8, time=8, solutions=3
     // Order: Progress | Rate | Solutions | ETA | Time
-    printf("] %6s/%6s %8.1f%% |", completed_str, total_str, progress_pct);
+    printf("] %6s/%6s %8.1f%% │", completed_str, total_str, progress_pct);
     
     if (show_flags & PROGRESS_SHOW_RATE) {
-        printf(" %sRate:%s %6s/s |", COLOR_YELLOW, COLOR_RESET, rate_str);
+        printf(" %sRate:%s %6s/s │", COLOR_YELLOW, COLOR_RESET, rate_str);
     }
     
     if (show_flags & PROGRESS_SHOW_SOLUTIONS) {
-        printf(" %sSolutions:%s %3d |", COLOR_GREEN, COLOR_RESET, solutions);
+        printf(" %sSolutions:%s %3d │", COLOR_GREEN, COLOR_RESET, solutions);
     }
     
     if (show_flags & PROGRESS_SHOW_ETA) {
-        printf(" %sETA:%s %8s |", COLOR_GREEN, COLOR_RESET, eta_str);
+        printf(" %sETA:%s %8s │", COLOR_GREEN, COLOR_RESET, eta_str);
     }
     
     if (show_flags & PROGRESS_SHOW_ELAPSED) {
@@ -276,19 +278,19 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
     static bool first_display = true;
     static int last_num_threads = 0;
     
-    // Calculate cursor movement for multi-line display (threads + overall = num_threads + 1 lines)
+    // Calculate cursor movement for multi-line display (threads + separator + total = num_threads + 2 lines)
     if (first_display || num_threads != last_num_threads) {
         // Clear any existing progress lines
         if (!first_display) {
-            for (int i = 0; i < last_num_threads + 1; i++) {
+            for (int i = 0; i < last_num_threads + 2; i++) {
                 printf("\033[A\033[2K"); // Move up one line and clear it
             }
         }
         first_display = false;
         last_num_threads = num_threads;
     } else {
-        // Move cursor up to start of progress area (num_threads + 1 lines)
-        for (int i = 0; i < num_threads + 1; i++) {
+        // Move cursor up to start of progress area (num_threads + separator + total = num_threads + 2 lines)
+        for (int i = 0; i < num_threads + 2; i++) {
             printf("\033[A\033[2K"); // Move up one line and clear it
         }
     }
@@ -296,6 +298,7 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
     // Track maximum ETA among threads for overall ETA calculation
     double max_thread_eta_seconds = 0.0;
     bool any_thread_active = false;
+    int total_solutions_found = 0;
     
     // Display per-thread progress bars first
     for (int i = 0; i < num_threads; i++) {
@@ -309,6 +312,7 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
         time_t thread_last_update = progress->last_update;
         bool thread_completed = progress->completed;
         int thread_solutions = progress->solutions_found;
+        total_solutions_found += thread_solutions;
         pthread_mutex_unlock(&progress->mutex);
         
         // Use thread estimate from tracker, fallback to equal split
@@ -318,7 +322,14 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
         } else {
             thread_estimated = tracker->total_combinations / num_threads; // Fallback
         }
-        double elapsed_seconds = difftime(time(NULL), thread_start_time);
+        
+        // Use completion time for completed threads, current time for active threads
+        double elapsed_seconds;
+        if (thread_completed) {
+            elapsed_seconds = difftime(thread_last_update, thread_start_time);
+        } else {
+            elapsed_seconds = difftime(time(NULL), thread_start_time);
+        }
         
         // Calculate thread ETA
         char thread_eta_str[16];
@@ -353,9 +364,9 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
             snprintf(thread_eta_str, sizeof(thread_eta_str), "∞");
         }
         
-        // Create thread label
-        char thread_label[32];
-        snprintf(thread_label, sizeof(thread_label), "Thread %d", i);
+        // Create thread label with zero-padded formatting
+        char thread_label[64];
+        snprintf(thread_label, sizeof(thread_label), "Thread %02d", i);
         
         // Use progress bar builder for this thread (20 chars wide, indented)
         // For threads: show Rate + (ETA or Elapsed) + Solutions, but not both time types
@@ -368,6 +379,11 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
         
         build_progress_bar(thread_label, thread_tests, thread_estimated, thread_rate, 
                           elapsed_seconds, thread_eta_str, thread_solutions, COLOR_BLUE, 20, true, thread_flags);
+        
+        // Add separator line after last thread
+        if (i == num_threads - 1) {
+            printf("────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼───────────────┤\n");
+        }
     }
     
     // Display total progress bar using builder
@@ -391,5 +407,5 @@ void display_per_thread_progress(thread_progress_t** all_progress, int num_threa
     
     build_progress_bar("Total", tracker->completed_tests, tracker->total_combinations, 
                       tracker->smoothed_rate, overall_elapsed, overall_eta_str, 
-                      tracker->solutions_found, COLOR_CYAN, 30, false, overall_flags);
+                      total_solutions_found, COLOR_CYAN, 30, false, overall_flags);
 }
