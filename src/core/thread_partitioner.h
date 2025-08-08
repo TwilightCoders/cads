@@ -28,9 +28,24 @@ partitioning_result_t* create_weighted_partitions(
     int num_threads
 );
 
+// Enhanced partitioner that considers both search space and computational weight
+partitioning_result_t* create_workload_balanced_partitions(
+    const algorithm_registry_entry_t* algorithms, 
+    int algorithm_count, 
+    int num_threads,
+    int max_fields,
+    int max_constants,
+    uint64_t field_permutations
+);
+
 void free_partitioning_result(partitioning_result_t* result);
 
 void print_partition_summary(const partitioning_result_t* result);
+
+// Enhanced partition summary that shows workload calculations
+void print_partition_summary_with_workload(const partitioning_result_t* result, 
+                                          const algorithm_registry_entry_t* algorithms, int algorithm_count,
+                                          int max_fields, int max_constants, uint64_t field_permutations);
 
 // Bin packing algorithm - distribute operations to minimize max thread weight
 bool balance_thread_weights(partitioning_result_t* result);

@@ -38,5 +38,7 @@ void format_rate(double rate, char* buffer, size_t buffer_size);
 #define COLOR_BLUE "\033[34m"
 #define COLOR_CYAN "\033[36m"
 #define COLOR_BOLD "\033[1m"
+#define COLOR_UNDERLINE "\033[4m"
+#define COLOR_NO_UNDERLINE "\033[24m"
 
 #endif // PROGRESS_TRACKER_H
